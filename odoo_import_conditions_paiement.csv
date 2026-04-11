@@ -1,0 +1,7 @@
+name,note,line_ids/value,line_ids/days,line_ids/value_amount
+Paiement immédiat,Paiement comptant à la commande,balance,0,0
+30 jours fin de mois,Paiement à 30 jours fin de mois,balance,30,0
+60 jours fin de mois,Paiement à 60 jours fin de mois — Segment Top uniquement,balance,60,0
+45 jours net,Paiement à 45 jours date de facture,balance,45,0
+Acompte 30% + Solde 30j,"Acompte 30% à la commande, solde à 30 jours",percent,0,30
+Acompte 30% + Solde 30j,,balance,30,0

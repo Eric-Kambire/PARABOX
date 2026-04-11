@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_parabox_litige_stage_user,parabox.litige.stage user,model_parabox_litige_stage,base.group_user,1,0,0,0
+access_parabox_litige_stage_manager,parabox.litige.stage manager,model_parabox_litige_stage,sales_team.group_sale_manager,1,1,1,1
+access_parabox_litige_user,parabox.litige user,model_parabox_litige,base.group_user,1,1,1,0
+access_parabox_litige_manager,parabox.litige manager,model_parabox_litige,sales_team.group_sale_manager,1,1,1,1

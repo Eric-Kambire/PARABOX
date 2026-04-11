@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="litige_stage_ouvert" model="parabox.litige.stage">
+        <field name="name">Ouvert</field>
+        <field name="sequence">10</field>
+        <field name="fold">False</field>
+        <field name="is_closed">False</field>
+    </record>
+    <record id="litige_stage_analyse" model="parabox.litige.stage">
+        <field name="name">En cours d'analyse</field>
+        <field name="sequence">20</field>
+        <field name="fold">False</field>
+        <field name="is_closed">False</field>
+    </record>
+    <record id="litige_stage_attente" model="parabox.litige.stage">
+        <field name="name">En attente client</field>
+        <field name="sequence">30</field>
+        <field name="fold">False</field>
+        <field name="is_closed">False</field>
+    </record>
+    <record id="litige_stage_resolu" model="parabox.litige.stage">
+        <field name="name">Résolu</field>
+        <field name="sequence">40</field>
+        <field name="fold">False</field>
+        <field name="is_closed">False</field>
+    </record>
+    <record id="litige_stage_clos" model="parabox.litige.stage">
+        <field name="name">Clos</field>
+        <field name="sequence">50</field>
+        <field name="fold">True</field>
+        <field name="is_closed">True</field>
+    </record>
+
+    <!-- Séquence pour la numérotation -->
+    <record id="seq_parabox_litige" model="ir.sequence">
+        <field name="name">Litige PARABOX</field>
+        <field name="code">parabox.litige</field>
+        <field name="prefix">LIT-PARA-%(year)s-</field>
+        <field name="padding">4</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+</odoo>

@@ -1,0 +1,6 @@
+name,category_id,uom_type,factor,rounding,comment
+ml,Volume,reference,1,0.01,Millilitre — unité de base volume
+L,Volume,bigger,0.001,0.01,Litre = 1000 ml
+Unités,Unit,reference,1,1,"Unité — capsules, comprimés, pièces"
+Boîte,Unit,bigger,0.1,1,Boîte de 10 unités (conditionnement)
+Carton,Unit,bigger,0.0833,1,Carton de 12 unités (expédition)

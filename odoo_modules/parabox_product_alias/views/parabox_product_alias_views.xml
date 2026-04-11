@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form view -->
+    <record id="view_parabox_product_alias_form" model="ir.ui.view">
+        <field name="name">parabox.product.alias.form</field>
+        <field name="model">parabox.product.alias</field>
+        <field name="arch" type="xml">
+            <form string="Alias produit">
+                <sheet>
+                    <group>
+                        <group string="Produit">
+                            <field name="product_id"/>
+                            <field name="fournisseur_id"/>
+                            <field name="actif"/>
+                        </group>
+                        <group string="Codes">
+                            <field name="code_parabox"/>
+                            <field name="code_fournisseur"/>
+                            <field name="code_revendeur"/>
+                            <field name="ean"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Remarques éventuelles..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree view -->
+    <record id="view_parabox_product_alias_tree" model="ir.ui.view">
+        <field name="name">parabox.product.alias.tree</field>
+        <field name="model">parabox.product.alias</field>
+        <field name="arch" type="xml">
+            <tree string="Alias produits">
+                <field name="product_id"/>
+                <field name="fournisseur_id"/>
+                <field name="code_parabox"/>
+                <field name="code_fournisseur"/>
+                <field name="code_revendeur"/>
+                <field name="ean"/>
+                <field name="actif"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action + Menu -->
+    <record id="action_parabox_product_alias" model="ir.actions.act_window">
+        <field name="name">Alias produits</field>
+        <field name="res_model">parabox.product.alias</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu — Alias Produits : Direction + Magasinier -->
+    <menuitem id="menu_parabox_product_alias"
+              name="Alias Produits"
+              parent="parabox_logistics_tracking.menu_parabox_logistics_root"
+              action="action_parabox_product_alias"
+              sequence="40"
+              groups="parabox_logistics_tracking.group_parabox_direction,
+                      parabox_logistics_tracking.group_parabox_magasinier"/>
+</odoo>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form view sign request -->
+    <record id="view_parabox_sign_request_form" model="ir.ui.view">
+        <field name="name">parabox.sign.request.form</field>
+        <field name="model">parabox.sign.request</field>
+        <field name="arch" type="xml">
+            <form string="Demande de signature">
+                <header>
+                    <button name="action_send_otp"
+                            string="Envoyer OTP"
+                            type="object"
+                            class="btn-primary"
+                            invisible="['|', ('otp_sent', '=', True), ('statut', '=', 'signed')]"/>
+                    <button name="action_check_pdf_integrity"
+                            string="Verifier integrite PDF"
+                            type="object"
+                            invisible="[('pdf_hash', '=', False)]"/>
+                    <field name="statut" widget="statusbar"
+                           statusbar_visible="draft,otp_sent,signed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <div class="alert alert-success" role="alert"
+                         invisible="[('signed', '=', False)]">
+                        <strong>BL signe</strong> le
+                        <field name="sign_datetime" readonly="1" nolabel="1"/> —
+                        Mode : <field name="mode" readonly="1" nolabel="1"/>
+                    </div>
+                    <div class="alert alert-warning" role="alert"
+                         invisible="[('mode', '!=', 'degrade')]">
+                        <strong>Signature en mode degrade</strong> -- sans OTP. A verifier par l'ADV.
+                    </div>
+                    <group>
+                        <group string="Identifiants">
+                            <field name="picking_id"/>
+                            <field name="client_id" readonly="1"/>
+                            <field name="livreur_id"/>
+                            <field name="token" readonly="1"/>
+                        </group>
+                        <group string="OTP">
+                            <field name="otp_sent" readonly="1"/>
+                            <field name="otp_verified" readonly="1"/>
+                            <field name="otp_expiry" readonly="1"/>
+                            <field name="otp_attempts" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Signature" invisible="[('signed', '=', False)]">
+                        <group>
+                            <field name="sign_datetime" readonly="1"/>
+                            <field name="sign_ip" readonly="1"/>
+                            <field name="sign_gps" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="signature_image" widget="image" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="PDF signé" invisible="[('pdf_hash', '=', False)]">
+                        <field name="pdf_hash" readonly="1" string="Hash SHA-256"/>
+                        <field name="pdf_signed" widget="binary" readonly="1" filename="pdf_filename"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree view -->
+    <record id="view_parabox_sign_request_tree" model="ir.ui.view">
+        <field name="name">parabox.sign.request.tree</field>
+        <field name="model">parabox.sign.request</field>
+        <field name="arch" type="xml">
+            <tree string="Demandes de signature"
+                  decoration-success="signed == True and mode == 'otp'"
+                  decoration-warning="signed == True and mode == 'degrade'"
+                  decoration-muted="statut == 'failed'">
+                <field name="name"/>
+                <field name="picking_id"/>
+                <field name="client_id"/>
+                <field name="livreur_id"/>
+                <field name="statut"/>
+                <field name="mode"/>
+                <field name="otp_verified"/>
+                <field name="signed"/>
+                <field name="sign_datetime"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_parabox_sign_request" model="ir.actions.act_window">
+        <field name="name">Signatures BL</field>
+        <field name="res_model">parabox.sign.request</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu — Signatures BL : Direction + Magasinier -->
+    <menuitem id="menu_parabox_sign"
+              name="Signatures BL"
+              parent="parabox_logistics_tracking.menu_parabox_logistics_root"
+              action="action_parabox_sign_request"
+              sequence="5"
+              groups="parabox_logistics_tracking.group_parabox_direction,
+                      parabox_logistics_tracking.group_parabox_magasinier"/>
+
+    <!-- Bouton sur stock.picking -->
+    <record id="view_picking_sign_form" model="ir.ui.view">
+        <field name="name">stock.picking.sign.form</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_view_sign_requests"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-pencil"
+                        invisible="[('picking_type_code', '!=', 'outgoing')]">
+                    <field name="sign_count" widget="statinfo" string="Signatures"/>
+                </button>
+                <button name="action_create_sign_request"
+                        string="Signer BL"
+                        type="object"
+                        class="btn-primary oe_stat_button"
+                        icon="fa-lock"
+                        invisible="['|', ('picking_type_code', '!=', 'outgoing'), ('is_signed', '=', True)]">
+                </button>
+            </div>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,8 @@
+name,prefix,padding,number_next,comment
+Commandes Vente,SO-,5,1,"SO-00001, SO-00002..."
+Bons de Livraison,BL-,5,1,BL-00001 — lien systémique commande
+Factures Clients,FAC-,5,1,FAC-00001 — générée uniquement sur BL validé
+Avoirs Clients,AV-,5,1,AV-00001 — toujours lié facture + ticket litige
+Tickets Litiges,LIT-,5,1,LIT-00001 — registre unique (ID + taxonomie + SLA)
+Commandes Achat,PO-,5,1,PO-00001 — réassort fournisseurs
+Réceptions,REC-,5,1,REC-00001 — réception marchandises

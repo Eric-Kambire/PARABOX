@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+
+<t t-name="parabox_dashboard.Dashboard" owl="1">
+<div class="o_parabox_dashboard">
+
+    <!-- ═══════════════════════════════════════════════════════
+         HEADER
+    ═══════════════════════════════════════════════════════ -->
+    <div class="pb-header">
+        <div class="pb-header-left">
+            <div class="pb-logo">PARA<span class="accent">BOX</span></div>
+            <div class="pb-badge-direction">Direction</div>
+        </div>
+
+        <div class="pb-header-center">
+            <div class="pb-live-dot"></div>
+            Mis à jour : <t t-esc="state.last_update"/>
+        </div>
+
+        <div class="pb-header-right">
+            <div class="pb-clock-wrap">
+                <div class="pb-clock" t-ref="clock">--:--:--</div>
+                <div class="pb-clock-date">Dashboard de pilotage</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         BARRE ALERTES
+    ═══════════════════════════════════════════════════════ -->
+    <div t-att-class="'pb-alertes-bar ' + (hasAlertes ? 'active' : '')">
+        <div class="pb-alertes-inner">
+            <t t-if="hasAlertes">
+                <t t-foreach="state.alertes" t-as="al" t-key="al_index">
+                    <div t-att-class="'pb-alerte-chip ' + (al.level || 'warning')">
+                        <i t-att-class="al.level === 'danger' ? 'fa fa-times-circle' : 'fa fa-exclamation-triangle'"/>
+                        <span class="pb-chip-badge"><t t-esc="al.level === 'danger' ? 'Critique' : 'Attention'"/></span>
+                        <t t-esc="al.message"/>
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <div class="pb-alerte-chip ok">
+                    <i class="fa fa-check-circle"/>
+                    <span class="pb-chip-badge">OK</span>
+                    Tous les indicateurs sont dans les normes
+                </div>
+            </t>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         CORPS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="pb-body">
+
+        <!-- Chargement -->
+        <div t-if="state.loading" class="pb-loading">
+            <div class="pb-spinner"/>
+            <div class="pb-loading-txt">Chargement des indicateurs...</div>
+        </div>
+
+        <!-- Erreur -->
+        <div t-elif="state.error" class="pb-error-box">
+            <i class="fa fa-exclamation-triangle"/>
+            <h3>Données indisponibles</h3>
+            <p><t t-esc="state.error"/></p>
+        </div>
+
+        <!-- Dashboard -->
+        <t t-else="">
+
+            <!-- ─── FINANCE ──────────────────────────────────────── -->
+            <div class="pb-section">
+                <div class="pb-section-tag finance">
+                    <i class="fa fa-line-chart"/>
+                    Finance
+                </div>
+                <div class="pb-section-line"/>
+            </div>
+
+            <div class="pb-kpi-grid">
+
+                <!-- CA Mois -->
+                <div t-att-class="'pb-card ' + caColor">
+                    <div class="pb-card-icon"><i class="fa fa-bar-chart"/></div>
+                    <div class="pb-card-body">
+                        <div class="pb-kpi-label">
+                            <span class="pb-dot" t-att-class="caColor === 'c-green' ? 'ok' : 'warn'"/>
+                            CA mois en cours
+                        </div>
+                        <div class="pb-kpi-value">
+                            <t t-esc="fmt(finance.ca_mois?.value)"/>
+                            <span class="pb-kpi-unit">DH</span>
+                        </div>
+                        <t t-if="finance.ca_mois?.evolution !== undefined">
+                            <div t-att-class="'pb-evol ' + (finance.ca_mois.evolution >= 0 ? 'up' : 'down')">
+                                <i t-att-class="finance.ca_mois.evolution >= 0 ? 'fa fa-arrow-up' : 'fa fa-arrow-down'"/>
+                                <t t-esc="Math.abs(finance.ca_mois.evolution).toFixed(1) + '% vs M-1'"/>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+
+                <!-- Encours clients -->
+                <div t-att-class="'pb-card ' + dotState(finance.encours?.alert)">
+                    <div class="pb-card-icon"><i class="fa fa-users"/></div>
+                    <div class="pb-card-body">
+                        <div class="pb-kpi-label">
+                            <span t-att-class="'pb-dot ' + alertDot(finance.encours?.alert)"/>
+                            Encours clients
+                        </div>
+                        <div class="pb-kpi-value">
+                            <t t-esc="fmt(finance.encours?.value)"/>
+                            <span class="pb-kpi-unit">DH</span>
+                        </div>
+                        <div class="pb-kpi-sub"><t t-esc="(finance.encours?.nb || 0) + ' factures ouvertes'"/></div>
+                    </div>
+                </div>
+
+                <!-- DSO -->
+                <div t-att-class="'pb-card ' + dotState(finance.dso?.alert)">
+                    <div class="pb-card-icon"><i class="fa fa-clock-o"/></div>
+                    <div class="pb-card-body">
+                        <div class="pb-kpi-label">
+                            <span t-att-class="'pb-dot ' + alertDot(finance.dso?.alert)"/>
+                            DSO
+                        </div>
+                        <div class="pb-kpi-value">
+                            <t t-esc="finance.dso?.value || 0"/>
+                            <span class="pb-kpi-unit">j</span>
+                        </div>
+                        <div class="pb-kpi-sub">Objectif : &lt; 45 jours</div>
+                    </div>
+                </div>
+
+                <!-- Litiges -->
+                <div t-att-class="'pb-card ' + dotState(finance.litiges?.alert)">
+                    <div class="pb-card-icon"><i class="fa fa-gavel"/></div>
+                    <div class="pb-card-body">
+                        <div class="pb-kpi-label">
+                            <span t-att-class="'pb-dot ' + alertDot(finance.litiges?.alert)"/>
+                            Litiges ouverts
+                        </div>
+                        <div class="pb-kpi-value">
+                            <t t-esc="fmt(finance.litiges?.value)"/>
+                            <span class="pb-kpi-unit">DH</span>
+                        </div>
+                        <div class="pb-kpi-sub"><t t-esc="(finance.litiges?.nb || 0) + ' litige(s)'"/></div>
+                    </div>
+                </div>
+
+                <!-- Factures en retard — cliquable -->
+                <div t-att-class="'pb-card clickable ' + dotState(finance.retard?.alert)"
+                     t-on-click="openFacturesRetard">
+                    <div class="pb-card-icon"><i class="fa fa-exclamation-circle"/></div>
+                    <div class="pb-card-body">
+                        <div class="pb-kpi-label">
+                            <span t-att-class="'pb-dot ' + alertDot(finance.retard?.alert)"/>
+                            Factures en retard
+                            <i class="fa fa-external-link pb-open-link"/>
+                        </div>
+                        <div class="pb-kpi-value">
+                            <t t-esc="fmt(finance.retard?.value)"/>
+                            <span class="pb-kpi-unit">DH</span>
+                        </div>
+                        <div class="pb-kpi-sub"><t t-esc="(finance.retard?.nb || 0) + ' factures'"/></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ─── LOGISTIQUE ────────────────────────────────────── -->
+            <div class="pb-section">
+                <div class="pb-section-tag logistic">
+                    <i class="fa fa-truck"/>
+                    Logistique
+                </div>
+                <div class="pb-section-line"/>
+            </div>
+
+            <div class="pb-kpi-grid">
+
+                <!-- OTIF -->
+                <div t-att-class="'pb-card ' + dotState(logistique.otif?.alert)">
+                    <div class="pb-card-icon"><i class="fa fa-check-square-o"/></div>
+                    <div class="pb-card-body">
+                        <div class="pb-kpi-label">
+                            <span t-att-class="'pb-dot ' + alertDot(logistique.otif?.alert)"/>
+                            OTIF
+                        </div>
+                        <div class="pb-kpi-value">
+                            <t t-esc="(logistique.otif?.value || 0).toFixed(1)"/>
+                            <span class="pb-kpi-unit">%</span>
+                        </div>
+                        <div class="pb-prog">
+                            <div class="pb-prog-bar">
+                                <div class="pb-prog-fill" t-att-style="'width:' + otifPct + '%'"/>
+                            </div>
+                            <div class="pb-prog-meta">
+                                <span><t t-esc="(logistique.otif?.on_time || 0) + '/' + (logistique.otif?.total || 0) + ' BL'"/></span>
+                                <span>Cible 95 %</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fill Rate -->
+                <div t-att-class="'pb-card ' + dotState(logistique.fill_rate?.alert)">
+                    <div class="pb-card-icon"><i class="fa fa-tasks"/></div>
+                    <div class="pb-card-body">
+                        <div class="pb-kpi-label">
+                            <span t-att-class="'pb-dot ' + alertDot(logistique.fill_rate?.alert)"/>
+                            Fill Rate
+                        </div>
+                        <div class="pb-kpi-value">
+                            <t t-esc="(logistique.fill_rate?.value || 0).toFixed(1)"/>
+                            <span class="pb-kpi-unit">%</span>
+                        </div>
+                        <div class="pb-prog">
+                            <div class="pb-prog-bar">
+                                <div class="pb-prog-fill" t-att-style="'width:' + fillRatePct + '%'"/>
+                            </div>
+                            <div class="pb-prog-meta">
+                                <span>Lignes livrées</span>
+                                <span>Cible 95 %</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ruptures stock -->
+                <div t-att-class="'pb-card ' + dotState(logistique.ruptures?.alert)">
+                    <div class="pb-card-icon"><i class="fa fa-warning"/></div>
+                    <div class="pb-card-body">
+                        <div class="pb-kpi-label">
+                            <span t-att-class="'pb-dot ' + alertDot(logistique.ruptures?.alert)"/>
+                            Ruptures stock
+                        </div>
+                        <div class="pb-kpi-value">
+                            <t t-esc="logistique.ruptures?.value || 0"/>
+                        </div>
+                        <div t-if="logistique.ruptures?.produits?.length" class="pb-ruptures">
+                            <t t-foreach="logistique.ruptures.produits.slice(0,3)" t-as="p" t-key="p">
+                                <i class="fa fa-minus-circle"/><t t-esc="p"/><br/>
+                            </t>
+                        </div>
+                        <div t-else="" class="pb-kpi-sub">Aucune rupture</div>
+                    </div>
+                </div>
+
+                <!-- BL en cours — cliquable -->
+                <div class="pb-card clickable c-blue" t-on-click="openBLsEnCours">
+                    <div class="pb-card-icon"><i class="fa fa-inbox"/></div>
+                    <div class="pb-card-body">
+                        <div class="pb-kpi-label">
+                            <span class="pb-dot ok"/>
+                            BL en cours
+                            <i class="fa fa-external-link pb-open-link"/>
+                        </div>
+                        <div class="pb-kpi-value">
+                            <t t-esc="logistique.bl_en_cours?.value || 0"/>
+                        </div>
+                        <div class="pb-kpi-sub">
+                            <t t-esc="(logistique.bl_en_cours?.confirmes || 0) + ' en attente · ' + (logistique.bl_en_cours?.assigned || 0) + ' prêts'"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reliquats -->
+                <div t-att-class="'pb-card ' + dotState(logistique.reliquats?.alert)">
+                    <div class="pb-card-icon"><i class="fa fa-refresh"/></div>
+                    <div class="pb-card-body">
+                        <div class="pb-kpi-label">
+                            <span t-att-class="'pb-dot ' + alertDot(logistique.reliquats?.alert)"/>
+                            Reliquats ouverts
+                        </div>
+                        <div class="pb-kpi-value">
+                            <t t-esc="logistique.reliquats?.value || 0"/>
+                        </div>
+                        <div class="pb-kpi-sub">
+                            <t t-esc="logistique.reliquats?.alert ? 'Backorders importants' : 'Sous contrôle'"/>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ─── GRAPHIQUES ────────────────────────────────────── -->
+            <div class="pb-section">
+                <div class="pb-section-tag charts">
+                    <i class="fa fa-pie-chart"/>
+                    Graphiques
+                </div>
+                <div class="pb-section-line"/>
+            </div>
+
+            <div class="pb-charts-grid">
+
+                <!-- CA mensuel -->
+                <div class="pb-chart-card">
+                    <div class="pb-chart-head">
+                        <div class="pb-chart-title">
+                            <i class="fa fa-bar-chart" style="color:var(--pb-blue)"/>
+                            CA mensuel
+                        </div>
+                        <div class="pb-chart-pill">6 derniers mois</div>
+                    </div>
+                    <canvas t-ref="canvasCA" class="pb-chart-canvas" height="185"/>
+                </div>
+
+                <!-- Litiges -->
+                <div class="pb-chart-card">
+                    <div class="pb-chart-head">
+                        <div class="pb-chart-title">
+                            <i class="fa fa-gavel" style="color:var(--pb-yellow)"/>
+                            Litiges
+                        </div>
+                        <div class="pb-chart-pill">Par type</div>
+                    </div>
+                    <t t-if="state.kpis?.charts?.litiges_par_type?.data?.length">
+                        <canvas t-ref="canvasLitiges" class="pb-chart-canvas" height="185"/>
+                    </t>
+                    <t t-else="">
+                        <div class="pb-chart-empty">
+                            <i class="fa fa-check-circle" style="color:var(--pb-green);font-size:30px;margin-bottom:4px;display:block"/>
+                            Aucun litige ouvert
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Encours Top 5 -->
+                <div class="pb-chart-card">
+                    <div class="pb-chart-head">
+                        <div class="pb-chart-title">
+                            <i class="fa fa-users" style="color:var(--pb-red)"/>
+                            Encours clients
+                        </div>
+                        <div class="pb-chart-pill">Top 5</div>
+                    </div>
+                    <t t-if="state.kpis?.charts?.top5_encours?.data?.length">
+                        <canvas t-ref="canvasEncours" class="pb-chart-canvas" height="185"/>
+                    </t>
+                    <t t-else="">
+                        <div class="pb-chart-empty">
+                            <i class="fa fa-check-circle" style="color:var(--pb-green);font-size:30px;margin-bottom:4px;display:block"/>
+                            Aucun encours
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Statuts BL -->
+                <div class="pb-chart-card">
+                    <div class="pb-chart-head">
+                        <div class="pb-chart-title">
+                            <i class="fa fa-truck" style="color:var(--pb-green)"/>
+                            Statuts BL
+                        </div>
+                        <div class="pb-chart-pill">30 derniers jours</div>
+                    </div>
+                    <t t-if="state.kpis?.charts?.statuts_bl?.data?.length">
+                        <canvas t-ref="canvasBLs" class="pb-chart-canvas" height="185"/>
+                    </t>
+                    <t t-else="">
+                        <div class="pb-chart-empty">
+                            <i class="fa fa-inbox" style="font-size:30px;margin-bottom:4px;display:block"/>
+                            Aucune livraison
+                        </div>
+                    </t>
+                </div>
+
+            </div><!-- /charts-grid -->
+
+        </t><!-- /t-else -->
+    </div><!-- /pb-body -->
+</div><!-- /o_parabox_dashboard -->
+</t>
+
+</templates>

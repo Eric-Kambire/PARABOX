@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_parabox_product_alias_user,parabox.product.alias user,model_parabox_product_alias,stock.group_stock_user,1,1,1,0
+access_parabox_product_alias_manager,parabox.product.alias manager,model_parabox_product_alias,stock.group_stock_manager,1,1,1,1

@@ -1,0 +1,6 @@
+name,currency_id,x_segment,item_ids/applied_on,item_ids/compute_price,item_ids/percent_price,item_ids/min_quantity,comment
+Tarif Public (Standard),MAD,Standard,all_products,percentage,0,1,Prix catalogue — aucune remise
+Tarif Top Client,MAD,Top,all_products,percentage,10,1,Remise 10% sur tarif public — clients segment Top
+Tarif Top Client — Volume,MAD,Top,all_products,percentage,15,50,Remise 15% — commande > 50 unités
+Tarif POS PARABOX,MAD,POS PARABOX,all_products,percentage,20,1,Remise 20% — filiale retail interne
+Tarif Beauté Mall,MAD,Top,all_products,percentage,12,1,Remise 12% — réseaux Mall/Beauté

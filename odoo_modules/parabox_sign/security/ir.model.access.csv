@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_parabox_sign_request_user,parabox.sign.request user,model_parabox_sign_request,stock.group_stock_user,1,1,1,0
+access_parabox_sign_request_manager,parabox.sign.request manager,model_parabox_sign_request,stock.group_stock_manager,1,1,1,1
+access_parabox_sign_log_user,parabox.sign.log user,model_parabox_sign_log,stock.group_stock_user,1,1,1,0
+access_parabox_sign_log_manager,parabox.sign.log manager,model_parabox_sign_log,stock.group_stock_manager,1,1,1,1

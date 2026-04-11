@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+<!--
+═══════════════════════════════════════════════════════════════════════════
+PARABOX — Automatisations IN-APP (Odoo 17)
+─────────────────────────────────────────────────────────────────────────
+Odoo 17 : base.automation hérite de ir.actions.server.
+Le code est mis DIRECTEMENT sur l'automation (plus de action_server_ids).
+Champs obligatoires : model_id, trigger, state='code', code.
+═══════════════════════════════════════════════════════════════════════════
+-->
+
+<!-- ─────────────────────────────────────────────────────────────────────
+     1. Commande confirmée → notifier Magasinier + Direction
+     ───────────────────────────────────────────────────────────────────── -->
+<record id="auto_notify_on_sale_confirmed" model="base.automation">
+    <field name="name">PARABOX — Commande confirmée : notifier Magasinier</field>
+    <field name="model_id" ref="sale.model_sale_order"/>
+    <field name="trigger">on_write</field>
+    <field name="filter_pre_domain">[('state', 'not in', ['sale', 'done'])]</field>
+    <field name="filter_domain">[('state', '=', 'sale')]</field>
+    <field name="state">code</field>
+    <field name="active" eval="True"/>
+    <field name="code"><![CDATA[
+for record in records:
+    # Chatter sur la commande
+    record.message_post(
+        body=(
+            "<b>Commande confirmee - A preparer</b><br/>"
+            "Commande : <b>%(name)s</b><br/>"
+            "Client : <b>%(partner)s</b><br/>"
+            "Montant : <b>%(amount).2f MAD</b><br/>"
+            "Lignes : %(lines)d produit(s)<br/>"
+            "<em>Le magasinier doit verifier le stock et valider le bon de livraison.</em>"
+        ) % {
+            'name': record.name,
+            'partner': record.partner_id.name,
+            'amount': record.amount_total,
+            'lines': len(record.order_line),
+        },
+        message_type='comment',
+        subtype_xmlid='mail.mt_note',
+    )
+
+    # Notification IN-APP
+    groups_to_notify = [
+        env.ref('stock.group_stock_manager', raise_if_not_found=False),
+        env.ref('parabox_logistics_tracking.group_parabox_magasinier', raise_if_not_found=False),
+        env.ref('parabox_logistics_tracking.group_parabox_direction', raise_if_not_found=False),
+    ]
+    partner_ids = list(set(
+        pid
+        for grp in groups_to_notify if grp
+        for pid in grp.users.mapped('partner_id').ids
+    ))
+    if partner_ids:
+        env['mail.message'].create({
+            'message_type': 'notification',
+            'body': (
+                "<b>Nouvelle commande a preparer</b><br/>"
+                "Commande <b>%(name)s</b> — Client : %(partner)s<br/>"
+                "Montant : %(amount).2f MAD"
+            ) % {
+                'name': record.name,
+                'partner': record.partner_id.name,
+                'amount': record.amount_total,
+            },
+            'res_id': record.id,
+            'model': 'sale.order',
+            'subtype_id': env.ref('mail.mt_comment').id,
+            'notification_ids': [(0, 0, {
+                'notification_type': 'inbox',
+                'res_partner_id': pid,
+                'notification_status': 'ready',
+            }) for pid in partner_ids],
+        })
+    ]]></field>
+</record>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+     2. BL validé (done) → notifier Commercial + Direction
+     ───────────────────────────────────────────────────────────────────── -->
+<record id="auto_notify_on_picking_done" model="base.automation">
+    <field name="name">PARABOX — BL valide : notifier Commercial</field>
+    <field name="model_id" ref="stock.model_stock_picking"/>
+    <field name="trigger">on_write</field>
+    <field name="filter_pre_domain">[('state', '!=', 'done'), ('picking_type_code', '=', 'outgoing')]</field>
+    <field name="filter_domain">[('state', '=', 'done'), ('picking_type_code', '=', 'outgoing')]</field>
+    <field name="state">code</field>
+    <field name="active" eval="True"/>
+    <field name="code"><![CDATA[
+for record in records:
+    sale_order = record.sale_id or False
+    groups_to_notify = [
+        env.ref('sales_team.group_sale_salesman', raise_if_not_found=False),
+        env.ref('parabox_logistics_tracking.group_parabox_commercial', raise_if_not_found=False),
+        env.ref('parabox_logistics_tracking.group_parabox_direction', raise_if_not_found=False),
+    ]
+    partner_ids = list(set(
+        pid
+        for grp in groups_to_notify if grp
+        for pid in grp.users.mapped('partner_id').ids
+    ))
+    if partner_ids:
+        env['mail.message'].create({
+            'message_type': 'notification',
+            'body': (
+                "<b>Bon de livraison valide</b><br/>"
+                "BL : <b>%(name)s</b><br/>"
+                "Client : %(partner)s<br/>"
+                "%(order_info)s"
+            ) % {
+                'name': record.name,
+                'partner': record.partner_id.name if record.partner_id else '—',
+                'order_info': ("Commande : %s" % sale_order.name) if sale_order else '',
+            },
+            'res_id': record.id,
+            'model': 'stock.picking',
+            'subtype_id': env.ref('mail.mt_comment').id,
+            'notification_ids': [(0, 0, {
+                'notification_type': 'inbox',
+                'res_partner_id': pid,
+                'notification_status': 'ready',
+            }) for pid in partner_ids],
+        })
+    ]]></field>
+</record>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+     3. BL annulé → notifier Commercial + Livreur
+     ───────────────────────────────────────────────────────────────────── -->
+<record id="auto_notify_on_picking_cancel" model="base.automation">
+    <field name="name">PARABOX — BL annule : notifier parties concernees</field>
+    <field name="model_id" ref="stock.model_stock_picking"/>
+    <field name="trigger">on_write</field>
+    <field name="filter_pre_domain">[('state', '!=', 'cancel'), ('picking_type_code', '=', 'outgoing')]</field>
+    <field name="filter_domain">[('state', '=', 'cancel'), ('picking_type_code', '=', 'outgoing')]</field>
+    <field name="state">code</field>
+    <field name="active" eval="True"/>
+    <field name="code"><![CDATA[
+for record in records:
+    groups_to_notify = [
+        env.ref('sales_team.group_sale_salesman', raise_if_not_found=False),
+        env.ref('parabox_logistics_tracking.group_parabox_commercial', raise_if_not_found=False),
+        env.ref('parabox_logistics_tracking.group_parabox_livreur', raise_if_not_found=False),
+    ]
+    partner_ids = list(set(
+        pid
+        for grp in groups_to_notify if grp
+        for pid in grp.users.mapped('partner_id').ids
+    ))
+    if partner_ids:
+        env['mail.message'].create({
+            'message_type': 'notification',
+            'body': (
+                "<b>Bon de livraison annule</b><br/>"
+                "BL : <b>%(name)s</b><br/>"
+                "Client : %(partner)s<br/>"
+                "Ce bon de livraison a ete annule par le magasinier."
+            ) % {
+                'name': record.name,
+                'partner': record.partner_id.name if record.partner_id else '—',
+            },
+            'res_id': record.id,
+            'model': 'stock.picking',
+            'subtype_id': env.ref('mail.mt_comment').id,
+            'notification_ids': [(0, 0, {
+                'notification_type': 'inbox',
+                'res_partner_id': pid,
+                'notification_status': 'ready',
+            }) for pid in partner_ids],
+        })
+    ]]></field>
+</record>
+
+</odoo>

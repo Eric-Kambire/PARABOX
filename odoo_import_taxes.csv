@@ -1,0 +1,8 @@
+name,type_tax_use,amount_type,amount,description,comment
+TVA 20% Vente,sale,percent,20,TVA20V,Taux normal TVA Maroc — parapharmacie
+TVA 7% Vente,sale,percent,7,TVA7V,Taux réduit — produits de première nécessité
+TVA 14% Vente,sale,percent,14,TVA14V,Taux intermédiaire
+TVA 0% Exonéré Vente,sale,percent,0,TVA0V,Produits exonérés
+TVA 20% Achat,purchase,percent,20,TVA20A,TVA déductible achats 20%
+TVA 7% Achat,purchase,percent,7,TVA7A,TVA déductible achats 7%
+TVA 14% Achat,purchase,percent,14,TVA14A,TVA déductible achats 14%

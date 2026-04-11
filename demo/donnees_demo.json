@@ -1,0 +1,133 @@
+{
+  "_description": "Données de démonstration PARABOX — Projet MATCH CAP2026",
+  "_db": "parabox_db",
+  "_date_demo": "2026-04-05",
+
+  "clients_demo": [
+    {
+      "ref": "DEMO-CLI-001",
+      "name": "PARFUMERIE ATLAS",
+      "email": "atlas@parabox-demo.ma",
+      "credit_limit": 15000,
+      "encours_initial": 3200,
+      "scenario": "S1 — commande normale"
+    },
+    {
+      "ref": "DEMO-CLI-002",
+      "name": "PARASHOP",
+      "email": "parashop@parabox-demo.ma",
+      "credit_limit": 20000,
+      "encours_initial": 0,
+      "scenario": "S2 — livraison partielle"
+    },
+    {
+      "ref": "DEMO-CLI-003",
+      "name": "PARA TALBORJT",
+      "email": "talborjt@parabox-demo.ma",
+      "credit_limit": 3000,
+      "encours_initial": 2800,
+      "scenario": "S3 — blocage crédit"
+    },
+    {
+      "ref": "DEMO-CLI-004",
+      "name": "PARAPHARMACIE GUÉLIZ",
+      "email": "gueliz@parabox-demo.ma",
+      "credit_limit": 25000,
+      "encours_initial": 0,
+      "scenario": "S5 — litige"
+    }
+  ],
+
+  "commandes_demo": [
+    {
+      "scenario": "S1",
+      "client": "PARFUMERIE ATLAS",
+      "lignes": [
+        {"produit_ref": "P001", "qty": 10},
+        {"produit_ref": "P009", "qty": 5}
+      ],
+      "flux": "BC → Pick → Ship → Signature OTP → Facture livré → Paiement cash",
+      "duree_min": 8
+    },
+    {
+      "scenario": "S2",
+      "client": "PARASHOP",
+      "lignes": [
+        {"produit_ref": "P002", "qty": 20}
+      ],
+      "stock_disponible": 12,
+      "flux": "BC 20 → BL 12 + backorder 8 → Facture 12 seulement",
+      "duree_min": 5
+    },
+    {
+      "scenario": "S3",
+      "client": "PARA TALBORJT",
+      "lignes": [
+        {"produit_ref": "P004", "qty": 3}
+      ],
+      "montant_approx": 725,
+      "flux": "BC → BLOCAGE crédit (2800+725 > 3000) → Dérogation ADV → Confirmation",
+      "duree_min": 4
+    },
+    {
+      "scenario": "S4",
+      "produit": "P001",
+      "flux": "Stock P001 < 20 (min) → Replenishment auto → PO généré → Réception lots → Stock vert",
+      "duree_min": 3
+    },
+    {
+      "scenario": "S5",
+      "client": "PARAPHARMACIE GUÉLIZ",
+      "flux": "BC → BL partiel → Ecart détecté → Litige créé (type: ecart_quantite) → Avoir → Clos",
+      "duree_min": 3
+    },
+    {
+      "scenario": "S6",
+      "client": "PARFUMERIE ATLAS",
+      "montant_facture": 4800,
+      "plan_encaissement": [
+        {"mode": "cash",    "montant": 2000, "date": "2026-04-05"},
+        {"mode": "cheque",  "montant": 1800, "ref": "CHQ-2026-047", "date": "2026-04-05"},
+        {"mode": "traite",  "montant": 1000, "ref": "TRT-2026-012", "echeance": "2026-05-05"}
+      ],
+      "flux": "Facture 4800 DH → Plan encaissement multi-modes → Statut Partiel → Soldé",
+      "duree_min": 2
+    }
+  ],
+
+  "lots_actifs_demo": [
+    {"lot": "LOT-P001-2026A", "produit": "P001", "qte": 150, "emplacement": "PBX/Stock"},
+    {"lot": "LOT-P002-2026A", "produit": "P002", "qte": 200, "emplacement": "PBX/Stock"},
+    {"lot": "LOT-P004-2026A", "produit": "P004", "qte": 120, "emplacement": "PBX/Stock"},
+    {"lot": "LOT-P009-2026A", "produit": "P009", "qte": 75, "emplacement": "PBX/Stock"}
+  ],
+
+  "ordre_presentation": [
+    "Intro (2 min) — Présenter le problème PARABOX : BC facturé ≠ BL livré → 3 MDH/an litiges",
+    "S1 (8 min) — Commande normale B2B : flux complet BC → BL → Signature OTP → Facture livré réel",
+    "S3 (4 min) — Blocage crédit auto + dérogation ADV",
+    "S2 (5 min) — Livraison partielle : backorder + facture sur quantité livrée seulement",
+    "S4 (3 min) — Réapprovisionnement automatique : règles min/max → PO auto",
+    "S5 (3 min) — Litige : ouverture kanban → analyse → avoir → clos",
+    "S6 (2 min) — Paiement multi-instruments : plan encaissement cash + chèque + traite",
+    "Dashboard (2 min) — 10 KPIs Finance + Logistique temps réel",
+    "Conclusion (2 min) — ROI estimé : ~3 MDH litiges évités + ~10 MDH encours sécurisés"
+  ],
+
+  "comptes_demo": [
+    {"login": "admin@parabox.ma",      "password": "Parabox2026!", "role": "Administrateur"},
+    {"login": "commercial@parabox.ma", "password": "Parabox2026!", "role": "Commercial (S1, S3)"},
+    {"login": "adv@parabox.ma",        "password": "Parabox2026!", "role": "ADV (dérogation S3)"},
+    {"login": "magasinier@parabox.ma", "password": "Parabox2026!", "role": "Magasinier (picking)"},
+    {"login": "livreur@parabox.ma",    "password": "Parabox2026!", "role": "Livreur mobile (OTP)"},
+    {"login": "comptable@parabox.ma",  "password": "Parabox2026!", "role": "Comptable (factures, S6)"},
+    {"login": "direction@parabox.ma",  "password": "Parabox2026!", "role": "Direction (dashboard)"}
+  ],
+
+  "setup_ngrok": {
+    "commande": "ngrok http 8069",
+    "config_odoo": "Settings > Technical > System Parameters > web.base.url",
+    "qr_livreur": "Générer depuis /parabox/mobile/livreur avec l'URL ngrok",
+    "note": "Mettre à jour web.base.url avant la démo pour que les OTP contiennent la bonne URL"
+  }
+}

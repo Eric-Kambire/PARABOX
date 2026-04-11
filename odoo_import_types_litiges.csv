@@ -1,0 +1,8 @@
+name,x_sla_heures,x_type_origine,x_process_lien,comment
+Prix / Remise,24,création,Order-to-Cash,Écart prix facturé vs convenu — SLA 24h
+Quantité,48,détection,Promesse & Livraison,Écart quantité livrée vs commandée — SLA 48h
+Casse / DLC,72,détection,Promesse & Livraison,Produit endommagé ou DLC dépassée — SLA 72h
+Non-conformité,120,détection,Promesse & Livraison,Produit non conforme à la commande — SLA 5 jours
+Retard livraison,48,détection,Promesse & Livraison,Livraison hors Date Promise — SLA 48h
+Surfacturation,24,création,Order-to-Cash,Facture > BL validé — SLA 24h
+Doublon facture,24,création,Order-to-Cash,Facture émise en double — SLA 24h

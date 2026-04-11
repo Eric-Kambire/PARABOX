@@ -1,0 +1,8 @@
+name,location_id,usage,comment
+Stock Principal,WH-CASA,internal,Stockage principal produits disponibles
+Zone Picking,WH-CASA,internal,Zone préparation commandes
+Zone Expédition,WH-CASA,internal,Zone tampon avant chargement camion
+Quarantaine,WH-CASA,internal,Produits non-conformes / retours en attente contrôle
+Zone Réception,WH-CASA,internal,Réception fournisseurs avant rangement
+Clients,,customer,Emplacement virtuel clients
+Fournisseurs,,supplier,Emplacement virtuel fournisseurs

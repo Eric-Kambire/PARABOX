@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PARABOX — Projet MATCH CAP2026</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#2c3e50;font-size:15px;line-height:1.6}
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+.site-header{background:linear-gradient(135deg,#1a3a5c 0%,#2c3e50 100%);color:white;padding:28px 40px;display:flex;align-items:center;justify-content:space-between}
+.site-header h1{font-size:28px;font-weight:800;letter-spacing:2px}
+.site-header h1 span{color:#3498db}
+.header-meta{text-align:right;font-size:13px;opacity:.8}
+.header-badge{display:inline-block;background:#3498db;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-top:6px}
+
+/* ── Problem banner ──────────────────────────────────────────────────── */
+.problem-banner{background:linear-gradient(90deg,#e74c3c,#c0392b);color:white;padding:14px 40px;font-size:14px;display:flex;align-items:center;gap:16px}
+.problem-banner strong{font-size:16px}
+.problem-arrow{font-size:20px;opacity:.7}
+
+/* ── Tabs ────────────────────────────────────────────────────────────── */
+.tabs-nav{background:white;border-bottom:2px solid #e0e6ef;padding:0 32px;display:flex;overflow-x:auto;white-space:nowrap;gap:0}
+.tab-btn{padding:14px 18px;font-size:13px;font-weight:600;color:#666;background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;transition:all .2s;white-space:nowrap}
+.tab-btn:hover{color:#3498db;background:#f8f9fa}
+.tab-btn.active{color:#3498db;border-bottom-color:#3498db;background:white}
+
+/* ── Tab content ─────────────────────────────────────────────────────── */
+.tab-content{display:none;padding:28px 40px;max-width:1200px;margin:0 auto}
+.tab-content.active{display:block}
+
+/* ── Section title ───────────────────────────────────────────────────── */
+.section-h2{font-size:20px;font-weight:700;color:#1a3a5c;margin:24px 0 14px;display:flex;align-items:center;gap:10px}
+.section-h3{font-size:15px;font-weight:700;color:#2c3e50;margin:16px 0 8px}
+
+/* ── Cards grid ──────────────────────────────────────────────────────── */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin:16px 0}
+.card{background:white;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:4px solid #3498db}
+.card.green{border-top-color:#2ecc71}
+.card.orange{border-top-color:#f39c12}
+.card.red{border-top-color:#e74c3c}
+.card.purple{border-top-color:#9b59b6}
+.card-icon{font-size:28px;margin-bottom:8px}
+.card-title{font-size:15px;font-weight:700;color:#2c3e50;margin-bottom:6px}
+.card-text{font-size:13px;color:#666;line-height:1.5}
+
+/* ── AS-IS / Standard / MVP blocks ──────────────────────────────────── */
+.gap-box{border-radius:8px;overflow:hidden;margin:12px 0;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.gap-box-title{background:#2c3e50;color:white;padding:8px 14px;font-size:13px;font-weight:700}
+.gap-row{padding:10px 14px;font-size:13px;line-height:1.5}
+.asis{background:#fde8e8;border-left:4px solid #e74c3c}
+.standard{background:#e8f4fd;border-left:4px solid #3498db}
+.mvp{background:#f0e8fd;border-left:4px solid #8e44ad}
+
+/* ── Badges ──────────────────────────────────────────────────────────── */
+.badge-reality{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;margin:3px 2px}
+.badge-asis{background:#fde8e8;color:#c0392b;border:1px solid #e74c3c}
+.badge-partial{background:#fef3cd;color:#856404;border:1px solid #f39c12}
+.badge-target{background:#d1f2eb;color:#0b6e4f;border:1px solid #2ecc71}
+.badge-dev{background:#f0e8fd;color:#6c3483;border:1px solid #9b59b6}
+.badge-odoo{background:#e8f4fd;color:#1a5276;border:1px solid #3498db}
+
+/* ── Flow chain ──────────────────────────────────────────────────────── */
+.flow-chain{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin:16px 0}
+.flow-step{background:white;border:2px solid #3498db;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;color:#1a3a5c;text-align:center;min-width:100px}
+.flow-step.done{background:#d1f2eb;border-color:#2ecc71;color:#0b6e4f}
+.flow-step.alert{background:#fde8e8;border-color:#e74c3c;color:#c0392b}
+.flow-arrow{color:#3498db;font-size:20px;padding:0 6px;font-weight:700}
+
+/* ── KPI Table ───────────────────────────────────────────────────────── */
+.kpi-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+.kpi-table th{background:#1a3a5c;color:white;padding:10px 12px;text-align:left;font-weight:600}
+.kpi-table td{padding:9px 12px;border-bottom:1px solid #e0e6ef}
+.kpi-table tr:nth-child(even) td{background:#f8f9fa}
+.kpi-table tr:hover td{background:#eaf4fb}
+
+/* ── Methodology note ────────────────────────────────────────────────── */
+.methodology-note{background:#fffef0;border:2px solid #f39c12;border-radius:10px;padding:20px 24px;margin:24px 0}
+.methodology-note h4{color:#856404;margin-bottom:10px;font-size:15px}
+.methodology-note ol{padding-left:20px;font-size:13px;color:#555;line-height:1.8}
+
+/* ── ROI box ─────────────────────────────────────────────────────────── */
+.roi-box{background:linear-gradient(135deg,#1a3a5c,#2c3e50);color:white;border-radius:12px;padding:24px;margin:20px 0}
+.roi-box h3{font-size:18px;margin-bottom:16px}
+.roi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.roi-item{background:rgba(255,255,255,.1);border-radius:8px;padding:14px;text-align:center}
+.roi-value{font-size:28px;font-weight:800;color:#3498db}
+.roi-label{font-size:12px;opacity:.8;margin-top:4px}
+
+/* ── Module list ─────────────────────────────────────────────────────── */
+.module-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:12px 0}
+.module-item{background:white;border-radius:8px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:flex-start;gap:12px}
+.module-icon{font-size:22px;flex-shrink:0}
+.module-name{font-size:13px;font-weight:700;color:#2c3e50}
+.module-desc{font-size:12px;color:#888;margin-top:3px}
+
+/* ── Timeline ────────────────────────────────────────────────────────── */
+.timeline{position:relative;padding-left:28px;margin:16px 0}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:#e0e6ef}
+.tl-item{position:relative;margin-bottom:16px}
+.tl-dot{position:absolute;left:-24px;top:3px;width:14px;height:14px;border-radius:50%;background:#3498db;border:2px solid white;box-shadow:0 0 0 2px #3498db}
+.tl-item.done .tl-dot{background:#2ecc71;box-shadow:0 0 0 2px #2ecc71}
+.tl-item.alert .tl-dot{background:#e74c3c;box-shadow:0 0 0 2px #e74c3c}
+.tl-title{font-size:14px;font-weight:700;color:#2c3e50}
+.tl-desc{font-size:12px;color:#888;margin-top:2px}
+
+/* ── Pill badges ─────────────────────────────────────────────────────── */
+.pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin:3px}
+.pill-green{background:#d1f2eb;color:#0b6e4f}
+.pill-orange{background:#fef3cd;color:#856404}
+.pill-red{background:#fde8e8;color:#c0392b}
+.pill-blue{background:#e8f4fd;color:#1a5276}
+.pill-purple{background:#f0e8fd;color:#6c3483}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media(max-width:768px){
+  .site-header{flex-direction:column;gap:12px;text-align:center;padding:20px}
+  .tab-content{padding:16px}
+  .roi-grid{grid-template-columns:1fr}
+  .problem-banner{flex-direction:column;padding:12px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════════════ -->
+<header class="site-header">
+  <div>
+    <h1>PARA<span>BOX</span> — Projet <span>MATCH</span></h1>
+    <div style="font-size:13px;opacity:.7;margin-top:4px">
+      CAP2026 · Odoo 17 Community · Zéro licence · 100% open source
+    </div>
+    <span class="header-badge">BC → BL → Facture → Signature → Zéro Litige</span>
+  </div>
+  <div class="header-meta">
+    <div style="font-size:20px;font-weight:700">PARABOX</div>
+    <div>Système de gestion parapharmacie</div>
+    <div>Casablanca, Maroc · 2026</div>
+  </div>
+</header>
+
+<!-- ══ PROBLEM BANNER ═══════════════════════════════════════════════════ -->
+<div class="problem-banner">
+  <strong>⚠️ Problème résolu :</strong>
+  <span>PARABOX facturait ce qui était <u>commandé</u></span>
+  <span class="problem-arrow">→</span>
+  <span>Client recevait moins que facturé</span>
+  <span class="problem-arrow">→</span>
+  <strong>~3 MDH/an de litiges · ~10 MDH d'encours à risque</strong>
+  <span class="problem-arrow">→</span>
+  <span style="color:#a8f0c6">✅ MATCH résout ce problème</span>
+</div>
+
+<!-- ══ TABS NAV ══════════════════════════════════════════════════════════ -->
+<nav class="tabs-nav" id="tabs-nav">
+  <button class="tab-btn active" data-tab="vue-globale">1. Vue Globale</button>
+  <button class="tab-btn" data-tab="chaine-b2b">2. Chaîne B2B</button>
+  <button class="tab-btn" data-tab="appro">3. Approvisionnement</button>
+  <button class="tab-btn" data-tab="b2c">4. B2C PARASHOP</button>
+  <button class="tab-btn" data-tab="zones-grises">⚠️ 5. Zones Grises</button>
+  <button class="tab-btn" data-tab="travail">🛠 6. Travail Réalisé</button>
+  <button class="tab-btn" data-tab="documents">📄 7. Documents Pivots</button>
+  <button class="tab-btn" data-tab="humain">👁 8. Ce qui reste humain</button>
+  <button class="tab-btn" data-tab="kpi">📊 9. Pilotage &amp; KPI</button>
+  <button class="tab-btn" data-tab="audit">🧾 10. Preuves &amp; Audit</button>
+</nav>
+
+<!-- ══ TAB 1 — VUE GLOBALE ══════════════════════════════════════════════ -->
+<div class="tab-content active" id="tab-vue-globale">
+  <h2 class="section-h2">🏢 Vue Globale PARABOX</h2>
+
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-icon">🏭</div>
+      <div class="card-title">L'entreprise</div>
+      <div class="card-text">Distributeur parapharmacie B2B + B2C. Clients : pharmacies, para-pharmacies, revendeurs. Entrepôt central Casablanca + point de vente PARASHOP.</div>
+    </div>
+    <div class="card red">
+      <div class="card-icon">💥</div>
+      <div class="card-title">Le problème principal</div>
+      <div class="card-text">Facturation sur quantité <strong>commandée</strong> ≠ quantité <strong>livrée réelle</strong>. Absence de preuve de livraison opposable. Litiges impossibles à trancher.</div>
+    </div>
+    <div class="card green">
+      <div class="card-icon">✅</div>
+      <div class="card-title">La solution MATCH</div>
+      <div class="card-text">Facturation sur <strong>livré réel</strong> · Signature OTP + BIC + SHA-256 · Contrôle crédit · Dashboard temps réel · Modules Python custom.</div>
+    </div>
+    <div class="card orange">
+      <div class="card-icon">📦</div>
+      <div class="card-title">19 produits tracés</div>
+      <div class="card-text">Tous en traçabilité par lot (tracking='lot'). Marques : Cerave, La Roche-Posay, Vichy, Bioderma, Filorga, Mustela, Oral-B…</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">👥</div>
+      <div class="card-title">21 clients actifs</div>
+      <div class="card-text">Parashop, Parapharmacie Anfa Care, Parfumerie Atlas, Para Talborjt, Parapharmacie Guéliz… Profils B2B avec limites de crédit.</div>
+    </div>
+    <div class="card purple">
+      <div class="card-icon">🔧</div>
+      <div class="card-title">Stack technique</div>
+      <div class="card-text">Odoo 17 Community · Python 3 · Chart.js · HTML5 Canvas · SHA-256 · ReportLab PDF · ngrok pour la démo mobile. Zéro budget.</div>
+    </div>
+  </div>
+
+  <div class="roi-box">
+    <h3>📈 ROI estimé du Projet MATCH</h3>
+    <div class="roi-grid">
+      <div class="roi-item">
+        <div class="roi-value">~3 MDH</div>
+        <div class="roi-label">Litiges évités / an</div>
+      </div>
+      <div class="roi-item">
+        <div class="roi-value">~10 MDH</div>
+        <div class="roi-label">Encours sécurisés</div>
+      </div>
+      <div class="roi-item">
+        <div class="roi-value">0 DH</div>
+        <div class="roi-label">Coût de licence</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="methodology-note">
+    <h4>📌 Note méthodologique</h4>
+    <p>Ce support distingue explicitement :</p>
+    <ol>
+      <li>Le fonctionnement réel observé chez PARABOX (<strong>AS-IS</strong>)</li>
+      <li>Les capacités standard d'Odoo 17 Community</li>
+      <li>Les développements MVP nécessaires (modules Python custom)</li>
+      <li>Le travail concret réalisé pour une démonstration crédible</li>
+    </ol>
+    <p style="margin-top:10px"><strong>Aucun outil payant. Aucune licence Enterprise. Tout fonctionne en local sur localhost:8069.</strong></p>
+  </div>
+</div>
+
+<!-- ══ TAB 2 — CHAÎNE B2B ════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-chaine-b2b">
+  <h2 class="section-h2">🔗 Chaîne B2B — BC → BL → Facture → Paiement</h2>
+
+  <div class="flow-chain">
+    <div class="flow-step done">📋 Commande<br/><small>BC client</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step done">🏭 Picking<br/><small>Préparation</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step done">🚚 Livraison<br/><small>BL + lots</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step done">✍️ Signature<br/><small>OTP + BIC</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step done">🧾 Facture<br/><small>Sur livré réel</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step done">💰 Paiement<br/><small>Multi-modes</small></div>
+  </div>
+
+  <div class="gap-box">
+    <div class="gap-box-title">📋 COMMANDE CLIENT (BC)</div>
+    <div class="gap-row asis"><strong>🔴 AS-IS :</strong> WhatsApp / téléphone → ressaisie manuelle par l'ADV dans un tableau Excel. Risque d'erreur de saisie. Pas de validation prix.</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo standard :</strong> Devis structuré → BC avec lignes produits, prix, UdM, remises. Workflow : Devis → Confirmé → En cours de livraison.</div>
+    <div class="gap-row mvp"><strong>🧩 MVP PARABOX :</strong> Contrôle crédit automatique au moment de la confirmation. Blocage si encours + montant BC &gt; limite. Dérogation ADV traçable.</div>
+  </div>
+
+  <div class="gap-box">
+    <div class="gap-box-title">🚚 BON DE LIVRAISON (BL)</div>
+    <div class="gap-row asis"><strong>🔴 AS-IS :</strong> BL papier établi par le chauffeur. Souvent incomplet. Non signé ou signé sans valeur légale. Écarts non documentés.</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo standard :</strong> stock.picking avec move.lines. Validation = quantités done. Lot / N° série obligatoire si tracking='lot'. Backorder automatique.</div>
+    <div class="gap-row mvp"><strong>🧩 MVP PARABOX :</strong> Module parabox_sign : OTP 6 chiffres → canvas BIC → GPS → PDF signé → Hash SHA-256 stocké. Preuve non répudiable.</div>
+  </div>
+
+  <div class="gap-box">
+    <div class="gap-box-title">🧾 FACTURATION</div>
+    <div class="gap-row asis"><strong>🔴 AS-IS :</strong> Facturation sur quantité commandée (BC). Si livraison partielle → client conteste → litige. ~3 MDH/an non recouvrés.</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo standard :</strong> Politique de facturation = "Quantités livrées". Facture créée depuis le BC mais montants calculés sur les BL validés.</div>
+    <div class="gap-row mvp"><strong>🧩 MVP PARABOX :</strong> Configuration appliquée : sale_default_invoice_policy = 'delivery'. Facturation automatiquement sur livré réel. Backordes non facturés.</div>
+  </div>
+
+  <div class="gap-box">
+    <div class="gap-box-title">💰 PAIEMENT</div>
+    <div class="gap-row asis"><strong>🔴 AS-IS :</strong> Cash, chèques, traites suivis dans Excel. Lettrage manuel. Chèques rejetés non suivis systématiquement.</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo standard :</strong> Paiement simple sur facture. Mode unique par transaction. Suivi basique.</div>
+    <div class="gap-row mvp"><strong>🧩 MVP PARABOX :</strong> Module parabox_encaissement : plan multi-lignes (cash + chèque + traite + virement). Statut : En attente → Partiel → Soldé. Gestion rejets.</div>
+  </div>
+
+  <div style="margin-top:16px">
+    <span class="badge-reality badge-asis">AS-IS commande informelle</span>
+    <span class="badge-reality badge-odoo">Odoo standard configuré</span>
+    <span class="badge-reality badge-dev">4 modules custom déployés</span>
+    <span class="badge-reality badge-target">Zéro litige facturation</span>
+  </div>
+</div>
+
+<!-- ══ TAB 3 — APPROVISIONNEMENT ════════════════════════════════════════ -->
+<div class="tab-content" id="tab-appro">
+  <h2 class="section-h2">📦 Approvisionnement &amp; Stocks</h2>
+
+  <div class="gap-box">
+    <div class="gap-box-title">🔄 RÉAPPROVISIONNEMENT</div>
+    <div class="gap-row asis"><strong>🔴 AS-IS :</strong> Commande fournisseur déclenchée manuellement quand le responsable remarque une rupture. Délai : plusieurs jours. Ruptures fréquentes sur les best-sellers.</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo standard :</strong> Règles de réapprovisionnement min/max sur stock.warehouse.orderpoint. Déclenchement automatique (cron) ou manuel (Replenishment).</div>
+    <div class="gap-row mvp"><strong>🧩 MVP PARABOX :</strong> 4 règles configurées : P001 (Min 20 / Max 100), P002 (Min 15 / Max 80), P004 (Min 10 / Max 75), P009 (Min 10 / Max 60). Déclencheur Auto.</div>
+  </div>
+
+  <div class="gap-box">
+    <div class="gap-box-title">🏷️ TRAÇABILITÉ LOTS</div>
+    <div class="gap-row asis"><strong>🔴 AS-IS :</strong> Numéros de lots notés sur papier ou dans Excel. Pas de lien avec les livraisons clients. DLC non suivies systématiquement.</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo standard :</strong> stock.lot lié à stock.quant et stock.move.line. Historique complet : où est chaque lot, depuis quand, pour quel client.</div>
+    <div class="gap-row mvp"><strong>🧩 MVP PARABOX :</strong> 19 produits avec tracking='lot'. 19 lots initiaux créés (LOT-P001-2026A … LOT-P022-2026A). Stock initial 2 365 unités importé.</div>
+  </div>
+
+  <div class="gap-box">
+    <div class="gap-box-title">🏪 2 ENTREPÔTS</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo configuré :</strong>
+      PARABOX WH (PBX) — entrepôt principal avec 2-step delivery (Pick + Ship) &amp; routes de réapprovisionnement.
+      PARASHOP (PS) — point de vente B2C avec ses propres règles de stock.
+    </div>
+  </div>
+
+  <h3 class="section-h3">Fournisseurs configurés (9)</h3>
+  <div class="cards-grid">
+    <div class="card"><div class="card-title">24hPara</div></div>
+    <div class="card"><div class="card-title">Côté Para</div></div>
+    <div class="card"><div class="card-title">HeyPara</div></div>
+    <div class="card"><div class="card-title">Inty</div></div>
+    <div class="card"><div class="card-title">LaMaisonPara</div></div>
+    <div class="card"><div class="card-title">Mapara</div></div>
+    <div class="card"><div class="card-title">NovaPara</div></div>
+    <div class="card"><div class="card-title">Parabioty</div></div>
+    <div class="card"><div class="card-title">Paranova</div></div>
+  </div>
+</div>
+
+<!-- ══ TAB 4 — B2C PARASHOP ══════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-b2c">
+  <h2 class="section-h2">🏪 B2C — PARASHOP (Point de Vente)</h2>
+  <div class="gap-box">
+    <div class="gap-box-title">VENTE EN CAISSE</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo POS configuré :</strong> Module point_of_sale installé. Caisse PARASHOP liée à l'entrepôt PS. Mêmes produits que le B2B avec traçabilité lot maintenue.</div>
+    <div class="gap-row mvp"><strong>🧩 Spécificité :</strong> Liste de prix PARASHOP dédiée (prix retail différent du B2B). Inventaire PS géré séparément de PBX. Réapprovisionnement depuis PBX.</div>
+  </div>
+  <div class="methodology-note">
+    <h4>📌 Périmètre démo</h4>
+    <ol>
+      <li>Le flux B2C PARASHOP est configuré mais les scénarios de démo se concentrent sur le B2B (sources principales des litiges)</li>
+      <li>La signature OTP n'est pas appliquée au POS (transaction immédiate en caisse)</li>
+      <li>Le contrôle crédit B2C est désactivé (paiement immédiat)</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ══ TAB 5 — ZONES GRISES ══════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-zones-grises">
+  <h2 class="section-h2">⚠️ Zones Grises &amp; Gaps Identifiés</h2>
+  <p style="color:#666;margin-bottom:20px;font-size:14px">Ces gaps ont été identifiés lors de l'analyse PARABOX. Chaque carte montre l'état actuel (AS-IS), ce qu'Odoo standard apporte, et ce que le MVP PARABOX MATCH résout.</p>
+
+  <div class="gap-box">
+    <div class="gap-box-title">🚨 Carte 1 — Commande informelle (WhatsApp → Excel)</div>
+    <div class="gap-row asis"><strong>🔴 AS-IS :</strong> La commande arrive par WhatsApp ou téléphone. L'ADV ressaisit dans Excel. Risque d'oubli, erreur de produit, doublon.</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo standard :</strong> Devis structuré avec liste produits, prix, UdM. Validation et confirmation traçable. Historique client.</div>
+    <div class="gap-row mvp"><strong>🧩 MVP PARABOX :</strong> Contrôle crédit à la confirmation (parabox_credit_control). Dérogation ADV loggée. Alerte si encours dépasse limite.</div>
+  </div>
+
+  <div class="gap-box">
+    <div class="gap-box-title">📦 Carte 2 — Boîte noire logistique (4 états non tracés)</div>
+    <div class="gap-row asis"><strong>🔴 AS-IS :</strong> Commandé ≠ Préparé ≠ Chargé ≠ Livré réel. Chaque étape est une boîte noire. Écarts non documentés.</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo standard :</strong> stock.picking avec état (Confirmed → Assigned → Done). Move.lines par produit. Backorder si partiel.</div>
+    <div class="gap-row mvp"><strong>🧩 MVP PARABOX :</strong> Module parabox_logistics_tracking : 4 états (Commandé / Préparé / Chargé / Livré). Calcul écart auto. Suivi substitutions. Taux de service par BL.</div>
+  </div>
+
+  <div class="gap-box">
+    <div class="gap-box-title">✍️ Carte 3 — BL papier sans valeur légale</div>
+    <div class="gap-row asis"><strong>🔴 AS-IS :</strong> BL imprimé, signé manuellement par le client. Le livreur perd la feuille, le client conteste sa signature, impossible à prouver en justice.</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo standard :</strong> Bon de livraison numérique avec QR code. Envoi PDF par email. Pas de signature électronique native en Community.</div>
+    <div class="gap-row mvp"><strong>🧩 MVP PARABOX :</strong> parabox_sign : OTP 6 chiffres (SHA-256) + canvas BIC + GPS + IP + timestamp → PDF généré + hash SHA-256 stocké → Détection fraude intégrée.</div>
+  </div>
+
+  <div class="gap-box">
+    <div class="gap-box-title">💸 Carte 4 — Paiements multiples non suivis</div>
+    <div class="gap-row asis"><strong>🔴 AS-IS :</strong> Un client paie 2000 cash + 1800 par chèque + 1000 par traite sur une même facture. Suivi dans Excel. Lettrage manuel. Chèques rejetés non tracés.</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo standard :</strong> Paiement simple : un mode, un montant, une date. Plusieurs paiements possibles mais sans plan structuré.</div>
+    <div class="gap-row mvp"><strong>🧩 MVP PARABOX :</strong> parabox_encaissement : plan multi-lignes avec modes (cash, chèque, traite, virement), dates d'échéance, statuts (Reçu, Encaissé, Rejeté). Solde auto calculé.</div>
+  </div>
+
+  <div class="gap-box">
+    <div class="gap-box-title">🏷️ Carte 5 — Double étiquetage produit (codes multiples)</div>
+    <div class="gap-row asis"><strong>🔴 AS-IS :</strong> Le même produit a un code PARABOX, un code fournisseur différent, un code revendeur différent, parfois un EAN. Correspondances dans la tête des équipes.</div>
+    <div class="gap-row standard"><strong>⚙️ Odoo standard :</strong> Référence interne (default_code) + EAN sur product.template. Un seul code fournisseur possible.</div>
+    <div class="gap-row mvp"><strong>🧩 MVP PARABOX :</strong> parabox_product_alias : table de correspondance code PARABOX / fournisseur / revendeur / EAN. Onglet dédié sur la fiche produit. Filtrable par fournisseur.</div>
+  </div>
+</div>
+
+<!-- ══ TAB 6 — TRAVAIL RÉALISÉ ═══════════════════════════════════════════ -->
+<div class="tab-content" id="tab-travail">
+  <h2 class="section-h2">🛠 Travail Concret Réalisé</h2>
+
+  <h3 class="section-h3">Modules Odoo configurés (natifs)</h3>
+  <div style="margin-bottom:16px">
+    <span class="pill pill-blue">sale_management</span>
+    <span class="pill pill-blue">stock</span>
+    <span class="pill pill-blue">purchase</span>
+    <span class="pill pill-blue">account</span>
+    <span class="pill pill-blue">crm</span>
+    <span class="pill pill-blue">contacts</span>
+    <span class="pill pill-blue">point_of_sale</span>
+  </div>
+
+  <h3 class="section-h3">Modules Python custom développés (Phase 4-6, 10)</h3>
+  <div class="module-list">
+    <div class="module-item">
+      <div class="module-icon">🔒</div>
+      <div><div class="module-name">parabox_credit_control</div><div class="module-desc">Contrôle crédit + dérogation ADV</div></div>
+    </div>
+    <div class="module-item">
+      <div class="module-icon">📦</div>
+      <div><div class="module-name">parabox_logistics_tracking</div><div class="module-desc">4 états logistiques + écarts + substitutions</div></div>
+    </div>
+    <div class="module-item">
+      <div class="module-icon">⚖️</div>
+      <div><div class="module-name">parabox_litige</div><div class="module-desc">Kanban litiges + SLA + escalade direction</div></div>
+    </div>
+    <div class="module-item">
+      <div class="module-icon">💵</div>
+      <div><div class="module-name">parabox_encaissement</div><div class="module-desc">Plan paiement multi-instruments</div></div>
+    </div>
+    <div class="module-item">
+      <div class="module-icon">🏷️</div>
+      <div><div class="module-name">parabox_product_alias</div><div class="module-desc">Correspondance codes produits multi-canaux</div></div>
+    </div>
+    <div class="module-item">
+      <div class="module-icon">✍️</div>
+      <div><div class="module-name">parabox_sign</div><div class="module-desc">OTP + signature BIC + PDF SHA-256</div></div>
+    </div>
+    <div class="module-item">
+      <div class="module-icon">📊</div>
+      <div><div class="module-name">parabox_dashboard</div><div class="module-desc">10 KPIs Finance + Logistique (Chart.js)</div></div>
+    </div>
+    <div class="module-item">
+      <div class="module-icon">📱</div>
+      <div><div class="module-name">parabox_mobile</div><div class="module-desc">Interface livreur mobile (ngrok)</div></div>
+    </div>
+  </div>
+
+  <h3 class="section-h3">Données importées dans parabox_db</h3>
+  <div class="cards-grid">
+    <div class="card green"><div class="card-icon">👥</div><div class="card-title">21 clients</div><div class="card-text">Avec limites de crédit configurées</div></div>
+    <div class="card green"><div class="card-icon">🏭</div><div class="card-title">9 fournisseurs</div><div class="card-text">24hPara, Côté Para, HeyPara…</div></div>
+    <div class="card green"><div class="card-icon">💊</div><div class="card-title">19 produits</div><div class="card-text">Avec lots, tracking, UdM ml/Units</div></div>
+    <div class="card green"><div class="card-icon">📦</div><div class="card-title">2 365 unités</div><div class="card-text">Stock initial importé avec 19 lots</div></div>
+    <div class="card green"><div class="card-icon">👤</div><div class="card-title">7 utilisateurs</div><div class="card-text">Admin, commercial, ADV, magasinier, livreur, comptable, direction</div></div>
+    <div class="card green"><div class="card-icon">📏</div><div class="card-title">4 règles min/max</div><div class="card-text">Réapprovisionnement auto P001, P002, P004, P009</div></div>
+  </div>
+</div>
+
+<!-- ══ TAB 7 — DOCUMENTS PIVOTS ════════════════════════════════════════ -->
+<div class="tab-content" id="tab-documents">
+  <h2 class="section-h2">📄 Documents Pivots du Flux PARABOX</h2>
+  <div class="timeline">
+    <div class="tl-item done">
+      <div class="tl-dot"></div>
+      <div class="tl-title">📋 Bon de Commande (BC) — sale.order</div>
+      <div class="tl-desc">Émis par l'ADV après réception commande client. Déclenche le picking. <span class="pill pill-green">Odoo natif</span></div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-dot"></div>
+      <div class="tl-title">🏭 Ordre de Picking — stock.picking (PICK)</div>
+      <div class="tl-desc">Préparation du colis en entrepôt (2-step delivery). Magasinier scanne les lots. <span class="pill pill-blue">2-step configuré</span></div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-dot"></div>
+      <div class="tl-title">🚚 Bon de Livraison (BL) — stock.picking (OUT)</div>
+      <div class="tl-desc">Transfert physique vers le client. Quantités réelles saisies. Validation = stock mouvementé. <span class="pill pill-green">Odoo natif</span></div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-dot"></div>
+      <div class="tl-title">✍️ Preuve de Livraison Signée — parabox.sign.request</div>
+      <div class="tl-desc">OTP + signature BIC + GPS + IP → PDF + hash SHA-256. <span class="pill pill-purple">Module custom</span></div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-dot"></div>
+      <div class="tl-title">🧾 Facture — account.move (out_invoice)</div>
+      <div class="tl-desc">Créée depuis le BC sur les quantités BL validées. Politique "livré réel". <span class="pill pill-green">Configuré</span></div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-dot"></div>
+      <div class="tl-title">💰 Plan d'Encaissement — parabox.encaissement</div>
+      <div class="tl-desc">Multi-modes : cash, chèque, traite, virement. Suivi statut et rejets. <span class="pill pill-purple">Module custom</span></div>
+    </div>
+    <div class="tl-item alert">
+      <div class="tl-dot"></div>
+      <div class="tl-title">⚖️ Litige — parabox.litige (si écart)</div>
+      <div class="tl-desc">Kanban 5 étapes. SLA automatique. Escalade direction si &gt;7j. Lien avec BC/BL/Facture/Avoir. <span class="pill pill-purple">Module custom</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 8 — CE QUI RESTE HUMAIN ══════════════════════════════════════ -->
+<div class="tab-content" id="tab-humain">
+  <h2 class="section-h2">👁 Ce qui reste humain — Limites du système</h2>
+  <p style="color:#666;margin-bottom:20px;font-size:14px">Odoo + les modules MATCH n'éliminent pas le jugement humain. Voici ce qui reste de la responsabilité des équipes.</p>
+
+  <div class="cards-grid">
+    <div class="card orange">
+      <div class="card-icon">🤝</div>
+      <div class="card-title">Négociation commerciale</div>
+      <div class="card-text">Les conditions tarifaires, remises exceptionnelles et gestes commerciaux restent à la discrétion du commercial et de la direction.</div>
+    </div>
+    <div class="card orange">
+      <div class="card-icon">🔍</div>
+      <div class="card-title">Contrôle qualité physique</div>
+      <div class="card-text">Vérification des produits avant livraison (dates, état, conformité). Odoo trace les lots mais ne vérifie pas l'état physique.</div>
+    </div>
+    <div class="card orange">
+      <div class="card-icon">📞</div>
+      <div class="card-title">Relation client</div>
+      <div class="card-text">La résolution d'un litige nécessite un contact humain. Le système fournit les preuves, mais la médiation reste manuelle.</div>
+    </div>
+    <div class="card orange">
+      <div class="card-icon">⚖️</div>
+      <div class="card-title">Décision de dérogation crédit</div>
+      <div class="card-text">L'ADV évalue la situation du client avant d'accorder une dérogation. Odoo fournit les chiffres, mais la décision est humaine.</div>
+    </div>
+    <div class="card orange">
+      <div class="card-icon">🧾</div>
+      <div class="card-title">Gestion des traites</div>
+      <div class="card-text">L'encaissement physique des traites et chèques reste un acte bancaire humain. Odoo trace mais ne présente pas les chèques à la banque.</div>
+    </div>
+    <div class="card orange">
+      <div class="card-icon">📱</div>
+      <div class="card-title">Mode dégradé terrain</div>
+      <div class="card-text">Si le client n'a pas reçu l'OTP (pas de réseau, email incorrect), le livreur doit décider d'utiliser le mode dégradé. Responsabilité humaine.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 9 — KPI ════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-kpi">
+  <h2 class="section-h2">📊 Pilotage &amp; KPIs — Dashboard Direction</h2>
+
+  <h3 class="section-h3">Finance (5 KPIs)</h3>
+  <table class="kpi-table">
+    <thead><tr><th>KPI</th><th>Définition</th><th>Source AS-IS</th><th>Source Odoo</th><th>Owner</th><th>Fréquence</th></tr></thead>
+    <tbody>
+      <tr><td>CA du mois</td><td>Total factures out_invoice postées du mois</td><td>Excel J+1</td><td>account.move</td><td>DAF</td><td>Quotidien</td></tr>
+      <tr><td>Encours clients</td><td>Somme amount_residual des factures ouvertes</td><td>Excel</td><td>account.move</td><td>Comptable</td><td>Temps réel</td></tr>
+      <tr><td>DSO</td><td>(Encours / CA 90j) × 90</td><td>Excel mensuel</td><td>account.move</td><td>DAF</td><td>Mensuel</td></tr>
+      <tr><td>Litiges ouverts</td><td>Somme montant_litige non clos</td><td>Excel</td><td>parabox.litige</td><td>ADV</td><td>Hebdo</td></tr>
+      <tr><td>Factures en retard</td><td>invoice_date_due &lt; today &amp; non payées</td><td>Excel</td><td>account.move</td><td>Comptable</td><td>Quotidien</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="section-h3">Logistique (5 KPIs)</h3>
+  <table class="kpi-table">
+    <thead><tr><th>KPI</th><th>Définition</th><th>Source AS-IS</th><th>Source Odoo</th><th>Owner</th><th>Fréquence</th></tr></thead>
+    <tbody>
+      <tr><td>OTIF</td><td>% BL livrés à temps et complets</td><td>Aucune</td><td>stock.picking</td><td>Logistique</td><td>Quotidien</td></tr>
+      <tr><td>Fill Rate</td><td>Qtés livrées / commandées × 100</td><td>Papier BL</td><td>parabox.logistics.line</td><td>Magasinier</td><td>Par BL</td></tr>
+      <tr><td>Ruptures stock</td><td>Produits avec qty_available ≤ 0</td><td>Inventaire physique</td><td>stock.quant</td><td>Magasinier</td><td>Temps réel</td></tr>
+      <tr><td>BL en cours</td><td>Pickings outgoing en état assigned/waiting</td><td>Tableau Excel</td><td>stock.picking</td><td>Logistique</td><td>Temps réel</td></tr>
+      <tr><td>Reliquats</td><td>BL avec backorder_id ≠ False</td><td>Aucune</td><td>stock.picking</td><td>ADV</td><td>Quotidien</td></tr>
+    </tbody>
+  </table>
+
+  <div class="methodology-note">
+    <h4>📌 Refresh automatique</h4>
+    <ol>
+      <li>Le dashboard se rafraîchit automatiquement toutes les <strong>60 secondes</strong></li>
+      <li>Les données sont calculées en temps réel via des appels RPC Odoo</li>
+      <li>Les alertes couleur : vert (OK) / orange (attention) / rouge (action requise)</li>
+      <li>Accessible depuis : <strong>direction@parabox.ma</strong> uniquement</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ══ TAB 10 — PREUVES & AUDIT ══════════════════════════════════════════ -->
+<div class="tab-content" id="tab-audit">
+  <h2 class="section-h2">🧾 Preuves &amp; Auditabilité</h2>
+
+  <div class="gap-box">
+    <div class="gap-box-title">🔐 SIGNATURE ÉLECTRONIQUE — Niveau de preuve</div>
+    <div class="gap-row mvp"><strong>✅ Ce qui est prouvable :</strong>
+      <ul style="margin-top:6px;padding-left:20px;font-size:13px;line-height:1.8">
+        <li>Le client a reçu l'OTP sur son email (log d'envoi)</li>
+        <li>L'OTP a été saisi correctement (otp_verified = True)</li>
+        <li>La signature a été tracée sur ce device (IP + User-Agent + timestamp)</li>
+        <li>La position GPS au moment de la signature (si autorisée)</li>
+        <li>Le PDF généré n'a pas été modifié depuis (hash SHA-256)</li>
+        <li>Le livreur ayant déclenché la signature (livreur_id)</li>
+      </ul>
+    </div>
+    <div class="gap-row asis"><strong>⚠️ Limite légale :</strong> La signature BIC sur canvas ne constitue pas une signature électronique qualifiée au sens de la loi 53-05 (Maroc) ou eIDAS (Europe). Elle constitue cependant une preuve de bonne foi et un commencement de preuve par écrit suffisant pour résoudre la grande majorité des litiges commerciaux.</div>
+  </div>
+
+  <div class="gap-box">
+    <div class="gap-box-title">📋 TRAÇABILITÉ COMPLÈTE</div>
+    <div class="gap-row standard"><strong>Pour chaque transaction, Odoo trace :</strong>
+      <ul style="margin-top:6px;padding-left:20px;font-size:13px;line-height:1.8">
+        <li>Qui a créé / modifié / validé chaque document (create_uid, write_uid)</li>
+        <li>Quand (create_date, write_date)</li>
+        <li>Depuis quelle IP (pour les actions web)</li>
+        <li>Chatter : historique complet des modifications sur chaque enregistrement</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="gap-box">
+    <div class="gap-box-title">🔍 DÉTECTION FRAUDE PDF</div>
+    <div class="gap-row mvp"><strong>🧩 Mécanisme SHA-256 :</strong>
+      <ol style="margin-top:6px;padding-left:20px;font-size:13px;line-height:1.8">
+        <li>Lors de la signature, le PDF est généré par ReportLab avec la signature incrustée</li>
+        <li>Le hash SHA-256 du PDF est calculé et stocké dans <code>parabox.sign.request.pdf_hash</code></li>
+        <li>À tout moment, le bouton "🔒 Vérifier intégrité PDF" recalcule le hash</li>
+        <li>Si hash_actuel ≠ hash_stocké → alerte "FRAUDE DÉTECTÉE" en rouge</li>
+        <li>Toute modification du PDF (même d'un seul pixel) change le hash</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="cards-grid">
+    <div class="card green">
+      <div class="card-icon">📧</div>
+      <div class="card-title">OTP par email</div>
+      <div class="card-text">Preuve que le bon email a reçu le code. Timestamp d'envoi stocké.</div>
+    </div>
+    <div class="card green">
+      <div class="card-icon">🔐</div>
+      <div class="card-title">Hash SHA-256</div>
+      <div class="card-text">Empreinte cryptographique unique du PDF signé. Non falsifiable.</div>
+    </div>
+    <div class="card green">
+      <div class="card-icon">📍</div>
+      <div class="card-title">GPS optionnel</div>
+      <div class="card-text">Coordonnées au moment de la signature. Prouve que le livreur était bien sur place.</div>
+    </div>
+    <div class="card green">
+      <div class="card-icon">📱</div>
+      <div class="card-title">Fingerprint device</div>
+      <div class="card-text">IP + User-Agent enregistrés. Identifie le téléphone utilisé pour signer.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCRIPT ═════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  var nav = document.getElementById('tabs-nav');
+  nav.addEventListener('click', function(e){
+    var btn = e.target.closest('.tab-btn');
+    if(!btn) return;
+    var tab = btn.getAttribute('data-tab');
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.tab-content').forEach(function(c){ c.classList.remove('active'); });
+    btn.classList.add('active');
+    var el = document.getElementById('tab-'+tab);
+    if(el) el.classList.add('active');
+  });
+})();
+</script>
+</body>
+</html>

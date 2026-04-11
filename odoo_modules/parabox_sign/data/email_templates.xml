@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Template email OTP — envoi du code de validation au client     -->
+    <!-- Expéditeur : ernestlompo28@gmail.com (configurer dans Odoo)    -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <record id="email_template_otp" model="mail.template">
+        <field name="name">PARABOX — Code OTP Signature BL</field>
+        <field name="model_id" ref="parabox_sign.model_parabox_sign_request"/>
+        <field name="subject">Votre code de validation — Livraison {{ object.picking_id.name }}</field>
+        <field name="email_from">PARABOX Livraisons &lt;ernestlompo28@gmail.com&gt;</field>
+        <field name="email_to">{{ object.client_id.email }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html"><![CDATA[
+<div style="margin:0;padding:0;background-color:#f0f2f5;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f2f5;padding:30px 0;">
+  <tr>
+    <td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+
+        <!-- En-tête -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#1a252f 0%,#2c3e50 100%);padding:28px 32px;text-align:center;">
+            <div style="font-size:26px;font-weight:900;color:white;letter-spacing:2px;">
+              PARA<span style="color:#3498db;">BOX</span>
+            </div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:6px;letter-spacing:1px;">
+              SYSTÈME DE LIVRAISON SÉCURISÉ
+            </div>
+          </td>
+        </tr>
+
+        <!-- Corps principal -->
+        <tr>
+          <td style="padding:32px;">
+
+            <!-- Salutation -->
+            <p style="font-size:16px;color:#2c3e50;margin:0 0 8px;">Bonjour <strong>{{ object.client_id.name }}</strong>,</p>
+            <p style="font-size:14px;color:#666;margin:0 0 24px;line-height:1.6;">
+              Votre livreur <strong>{{ object.livreur_id.name }}</strong> s'apprête à vous remettre
+              le bon de livraison ci-dessous. Veuillez valider la livraison en utilisant
+              le code à 6 chiffres suivant :
+            </p>
+
+            <!-- Infos BL -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;border-radius:10px;padding:16px;margin-bottom:24px;">
+              <tr>
+                <td style="padding:6px 12px;font-size:13px;color:#888;width:140px;">Bon de livraison</td>
+                <td style="padding:6px 12px;font-size:13px;color:#2c3e50;font-weight:600;">{{ object.picking_id.name }}</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 12px;font-size:13px;color:#888;">Livreur</td>
+                <td style="padding:6px 12px;font-size:13px;color:#2c3e50;font-weight:600;">{{ object.livreur_id.name }}</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 12px;font-size:13px;color:#888;">Référence</td>
+                <td style="padding:6px 12px;font-size:13px;color:#2c3e50;font-weight:600;">{{ object.name }}</td>
+              </tr>
+            </table>
+
+            <!-- Code OTP -->
+            <div style="text-align:center;margin:28px 0;">
+              <div style="font-size:12px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:14px;">
+                Votre code de validation
+              </div>
+              <div style="display:inline-block;background:linear-gradient(135deg,#e74c3c,#c0392b);color:white;font-size:42px;font-weight:900;letter-spacing:12px;padding:20px 36px;border-radius:14px;box-shadow:0 6px 20px rgba(231,76,60,0.3);">
+                {{ ctx.get('otp_plain', '------') }}
+              </div>
+              <div style="margin-top:14px;font-size:12px;color:#e74c3c;font-weight:600;">
+                Valable pendant 30 minutes
+              </div>
+            </div>
+
+            <!-- Bouton signature -->
+            <div style="text-align:center;margin:24px 0;">
+              <a href="{{ ctx.get('sign_url', '#') }}"
+                 style="display:inline-block;background:linear-gradient(135deg,#3498db,#2980b9);color:white;padding:15px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;letter-spacing:0.5px;box-shadow:0 4px 15px rgba(52,152,219,0.35);">
+                Signer le bon de livraison
+              </a>
+            </div>
+
+            <!-- Ou URL manuelle -->
+            <div style="background:#eaf4fb;border-left:4px solid #3498db;border-radius:6px;padding:12px 16px;margin:16px 0;">
+              <div style="font-size:12px;color:#666;margin-bottom:4px;">Ou copiez ce lien dans votre navigateur :</div>
+              <div style="font-size:12px;color:#2980b9;word-break:break-all;">{{ ctx.get('sign_url', '#') }}</div>
+            </div>
+
+            <!-- Avertissement sécurité -->
+            <div style="background:#fef9e7;border:1px solid #f7dc6f;border-radius:8px;padding:14px;margin:20px 0;">
+              <p style="margin:0;font-size:13px;color:#7d6608;">
+                &lt;strong&gt;Securite :</strong> Ne communiquez ce code qu'au livreur qui se présente devant vous.
+                PARABOX ne vous demandera jamais ce code par téléphone.
+              </p>
+            </div>
+
+            <p style="font-size:13px;color:#999;line-height:1.6;margin-top:8px;">
+              Si vous n'attendez pas de livraison, ignorez cet email et contactez PARABOX immédiatement.
+            </p>
+
+          </td>
+        </tr>
+
+        <!-- Pied de page -->
+        <tr>
+          <td style="background:#f8f9fa;border-top:1px solid #eee;padding:20px 32px;text-align:center;">
+            <p style="margin:0;font-size:12px;color:#aaa;">
+              © PARABOX — Système de gestion Odoo 17
+            </p>
+            <p style="margin:4px 0 0;font-size:11px;color:#bbb;">
+              Cet email a été envoyé automatiquement, merci de ne pas y répondre.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</div>
+        ]]></field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Serveur SMTP sortant Gmail — ernestlompo28@gmail.com           -->
+    <!-- App password : oafm xmjl vlwz nhbb                            -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <record id="smtp_parabox_gmail" model="ir.mail_server">
+        <field name="name">PARABOX Gmail SMTP</field>
+        <field name="smtp_host">smtp.gmail.com</field>
+        <field name="smtp_port">587</field>
+        <field name="smtp_encryption">starttls</field>
+        <field name="smtp_user">ernestlompo28@gmail.com</field>
+        <field name="smtp_pass">oafmxmjlvlwznhbb</field>
+        <field name="sequence">1</field>
+    </record>
+
+</odoo>

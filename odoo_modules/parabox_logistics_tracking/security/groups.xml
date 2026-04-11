@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- Groupes de sécurité PARABOX                                        -->
+    <!-- Chaque rôle voit uniquement ce dont il a besoin                    -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="group_parabox_direction" model="res.groups">
+        <field name="name">Direction</field>
+        <field name="category_id" ref="base.module_category_inventory_inventory"/>
+        <field name="comment">Accès complet : dashboard, tous les modules PARABOX, rapports</field>
+    </record>
+
+    <record id="group_parabox_commercial" model="res.groups">
+        <field name="name">Commercial</field>
+        <field name="category_id" ref="base.module_category_inventory_inventory"/>
+        <field name="comment">Accès : ventes, clients, commandes, crédit, litiges</field>
+    </record>
+
+    <record id="group_parabox_magasinier" model="res.groups">
+        <field name="name">Magasinier</field>
+        <field name="category_id" ref="base.module_category_inventory_inventory"/>
+        <field name="comment">Accès : stock, bons de livraison, traçabilité, réapprovisionnement</field>
+    </record>
+
+    <record id="group_parabox_livreur" model="res.groups">
+        <field name="name">Livreur</field>
+        <field name="category_id" ref="base.module_category_inventory_inventory"/>
+        <field name="comment">Accès : interface mobile livreur uniquement (pas de backend Odoo)</field>
+    </record>
+
+    <record id="group_parabox_comptable" model="res.groups">
+        <field name="name">Comptable</field>
+        <field name="category_id" ref="base.module_category_inventory_inventory"/>
+        <field name="comment">Accès : facturation, encaissements, rapports financiers</field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- Règle : les livreurs n'ont accès qu'au portail mobile              -->
+    <!-- On leur retire le menu backend en les plaçant hors du groupe       -->
+    <!-- internal user. En pratique : créer leurs comptes comme Portal User -->
+    <!-- dans Odoo (Paramètres > Utilisateurs > type = Portail)             -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+</odoo>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form view -->
+    <record id="view_parabox_encaissement_form" model="ir.ui.view">
+        <field name="name">parabox.encaissement.form</field>
+        <field name="model">parabox.encaissement</field>
+        <field name="arch" type="xml">
+            <form string="Plan d'encaissement">
+                <header>
+                    <field name="statut" widget="statusbar"
+                           statusbar_visible="attente,partiel,solde"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Facture">
+                            <field name="invoice_id"/>
+                            <field name="client_id" readonly="1"/>
+                            <field name="montant_total" readonly="1"/>
+                        </group>
+                        <group string="Encaissement">
+                            <field name="montant_recu" readonly="1"/>
+                            <field name="solde_restant" readonly="1"/>
+                            <field name="statut" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="ligne_ids">
+                        <tree editable="bottom"
+                              decoration-danger="statut == 'rejete'"
+                              decoration-success="statut == 'encaisse'">
+                            <field name="date"/>
+                            <field name="date_echeance"/>
+                            <field name="mode_paiement"/>
+                            <field name="reference"/>
+                            <field name="montant"/>
+                            <field name="statut"/>
+                            <field name="note"/>
+                        </tree>
+                    </field>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree view -->
+    <record id="view_parabox_encaissement_tree" model="ir.ui.view">
+        <field name="name">parabox.encaissement.tree</field>
+        <field name="model">parabox.encaissement</field>
+        <field name="arch" type="xml">
+            <tree string="Plans d'encaissement"
+                  decoration-warning="statut == 'partiel'"
+                  decoration-danger="statut == 'attente'">
+                <field name="name"/>
+                <field name="client_id"/>
+                <field name="invoice_id"/>
+                <field name="montant_total"/>
+                <field name="montant_recu"/>
+                <field name="solde_restant"/>
+                <field name="statut"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action + Menu -->
+    <record id="action_parabox_encaissement" model="ir.actions.act_window">
+        <field name="name">Plans d'encaissement</field>
+        <field name="res_model">parabox.encaissement</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu — Encaissements : Direction + Comptable -->
+    <menuitem id="menu_parabox_encaissement"
+              name="Encaissements"
+              parent="parabox_logistics_tracking.menu_parabox_logistics_root"
+              action="action_parabox_encaissement"
+              sequence="30"
+              groups="parabox_logistics_tracking.group_parabox_direction,
+                      parabox_logistics_tracking.group_parabox_comptable"/>
+</odoo>

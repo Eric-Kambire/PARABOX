@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue principale du dashboard (client action) -->
+    <record id="action_parabox_dashboard" model="ir.actions.client">
+        <field name="name">Dashboard Direction PARABOX</field>
+        <field name="tag">parabox_dashboard</field>
+    </record>
+
+    <!-- Menu principal application -->
+    <menuitem id="menu_parabox_dashboard_app"
+              name="Dashboard PARABOX"
+              action="action_parabox_dashboard"
+              sequence="1"
+              groups="parabox_logistics_tracking.group_parabox_direction"
+              web_icon="parabox_dashboard,static/description/icon.png"/>
+</odoo>

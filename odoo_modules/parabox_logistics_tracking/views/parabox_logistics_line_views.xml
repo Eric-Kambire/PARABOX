@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form view -->
+    <record id="view_parabox_logistics_line_form" model="ir.ui.view">
+        <field name="name">parabox.logistics.line.form</field>
+        <field name="model">parabox.logistics.line</field>
+        <field name="arch" type="xml">
+            <form string="Traçabilité logistique">
+                <sheet>
+                    <group>
+                        <group string="Document">
+                            <field name="picking_id"/>
+                            <field name="sale_order_id"/>
+                            <field name="product_id"/>
+                            <field name="lot_id"/>
+                        </group>
+                        <group string="Quantités">
+                            <field name="qty_ordered"/>
+                            <field name="qty_prepared"/>
+                            <field name="qty_loaded"/>
+                            <field name="qty_delivered"/>
+                        </group>
+                    </group>
+                    <group string="Écarts">
+                        <group>
+                            <field name="ecart_preparation" readonly="1"/>
+                            <field name="ecart_livraison" readonly="1"/>
+                            <field name="ecart_total" readonly="1"/>
+                            <field name="taux_service" readonly="1" widget="percentage"/>
+                        </group>
+                        <group>
+                            <field name="substitution"/>
+                            <field name="product_sub_id"
+                                   invisible="[('substitution', '=', False)]"/>
+                            <field name="note_ecart"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree view -->
+    <record id="view_parabox_logistics_line_tree" model="ir.ui.view">
+        <field name="name">parabox.logistics.line.tree</field>
+        <field name="model">parabox.logistics.line</field>
+        <field name="arch" type="xml">
+            <tree string="Traçabilité logistique"
+                  decoration-danger="has_ecart == True"
+                  decoration-success="taux_service &gt;= 100">
+                <field name="picking_id"/>
+                <field name="sale_order_id"/>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="qty_ordered"/>
+                <field name="qty_prepared"/>
+                <field name="qty_loaded"/>
+                <field name="qty_delivered"/>
+                <field name="ecart_total"/>
+                <field name="taux_service" widget="percentage"/>
+                <field name="has_ecart" column_invisible="1"/>
+                <field name="substitution"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_parabox_logistics_line" model="ir.actions.act_window">
+        <field name="name">Traçabilité logistique</field>
+        <field name="res_model">parabox.logistics.line</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu — groupes : root visible par tous les rôles internes PARABOX -->
+    <menuitem id="menu_parabox_logistics_root"
+              name="PARABOX Logistique"
+              sequence="90"
+              groups="parabox_logistics_tracking.group_parabox_direction,
+                      parabox_logistics_tracking.group_parabox_commercial,
+                      parabox_logistics_tracking.group_parabox_magasinier,
+                      parabox_logistics_tracking.group_parabox_comptable"/>
+    <!-- Traçabilité : Direction + Commercial + Magasinier -->
+    <menuitem id="menu_parabox_logistics_tracking"
+              name="Traçabilité"
+              parent="menu_parabox_logistics_root"
+              action="action_parabox_logistics_line"
+              sequence="10"
+              groups="parabox_logistics_tracking.group_parabox_direction,
+                      parabox_logistics_tracking.group_parabox_commercial,
+                      parabox_logistics_tracking.group_parabox_magasinier"/>
+</odoo>

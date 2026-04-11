@@ -1,0 +1,22 @@
+name,property_payment_term_id,x_credit_limit,x_credit_scoring,x_stop_livraison_seuil,x_segment,comment
+PARASHOP,30 jours fin de mois,500000,A,600000,POS PARABOX,Filiale interne — conditions privilégiées
+PARAPHARMACIE ANFA CARE,30 jours fin de mois,150000,A,180000,Top,Client historique Casablanca
+PARA SANTÉ MAARIF,30 jours fin de mois,120000,B,144000,Standard,
+PARAPHARMACIE AIN SEBAA PLUS,30 jours fin de mois,100000,B,120000,Standard,
+PARA BEAUTY PALACE CASA,45 jours net,200000,A,240000,Top,Mall — délai étendu
+PARAPHARMACIE HASSAN VITAL,30 jours fin de mois,130000,A,156000,Top,
+PARA AGDAL SANTÉ,30 jours fin de mois,100000,B,120000,Standard,
+PARAPHARMACIE SALÉ WELLNESS,30 jours fin de mois,80000,B,96000,Standard,
+PARA PRESTIGE RABAT,45 jours net,180000,A,216000,Top,Mall — délai étendu
+PARAPHARMACIE TANGER MED,30 jours fin de mois,110000,B,132000,Standard,
+PARA MALABATA CARE,30 jours fin de mois,90000,B,108000,Standard,
+PARAPHARMACIE TÉTOUAN SANTÉ,30 jours fin de mois,70000,C,84000,Standard,Nouveau client — scoring prudent
+PARA ROYAL SCENT TANGER,45 jours net,160000,A,192000,Top,Mall
+PARAPHARMACIE GUÉLIZ BEAUTÉ,30 jours fin de mois,120000,A,144000,Top,
+PARA MENARA CARE,30 jours fin de mois,90000,B,108000,Standard,
+PARAPHARMACIE SAFI PLUS,Paiement immédiat,50000,C,60000,Standard,Zone éloignée — paiement comptant
+PARFA MAJORELLE BEAUTY,45 jours net,150000,A,180000,Top,Mall Marrakech
+PARAPHARMACIE AGADIR BAY,30 jours fin de mois,100000,B,120000,Standard,
+PARA TALBORJT SANTÉ,30 jours fin de mois,80000,B,96000,Standard,
+PARAPHARMACIE TAROUDANT CARE,Paiement immédiat,40000,C,48000,Standard,Zone éloignée
+PARFUMERIE SOUSS BEAUTY,30 jours fin de mois,90000,B,108000,Standard,

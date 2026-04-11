@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_parabox_encaissement_user,parabox.encaissement user,model_parabox_encaissement,account.group_account_user,1,1,1,0
+access_parabox_encaissement_manager,parabox.encaissement manager,model_parabox_encaissement,account.group_account_manager,1,1,1,1
+access_parabox_encaissement_ligne_user,parabox.encaissement.ligne user,model_parabox_encaissement_ligne,account.group_account_user,1,1,1,0
+access_parabox_encaissement_ligne_manager,parabox.encaissement.ligne manager,model_parabox_encaissement_ligne,account.group_account_manager,1,1,1,1

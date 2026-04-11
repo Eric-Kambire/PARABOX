@@ -1,0 +1,20 @@
+﻿default_code,barcode,name,categ_id,list_price,description_sale,weight,volume,uom_id,x_marque,x_fournisseur,x_contenance,x_gamme,type,sale_ok,purchase_ok,tracking
+P020,3504105028398,Gel nettoyant bébé - Mustela,Bébé & Maman / Hygiène,120,Hypoallergénique. Doux pour peau,,200,ml,Mustela,Inty,200 ml,Hypoallergénique,product,True,True,lot
+P006,,Bain de Bouche - Oral-B,Hygiène / Bucco-dentaire / Hygiène,80,Fluor. Usage quotidien,,500,ml,Oral-B,Paranova,500 ml,Fluor,product,True,True,lot
+P005,,Shampoing Anti-Pelliculaire - Vichy,Cheveux / Traitement,138,Dercos. Cheveux gras,,200,ml,Vichy,HeyPara,200 ml,Dercos,product,True,True,lot
+P017,,Dercos Anti-Pelliculaire - Vichy,Cheveux / Shampooing,140,Anti-pellicules. Usage hebdomadaire,,200,ml,Vichy,HeyPara,200 ml,Anti-pellicules,product,True,True,lot
+P008,3504105028183,Vitamines Complexe - Nature’s Bounty,Compléments Alimentaires / Bien-être,190,Multivitamines. Énergie générale,,90,Unités,Nature’s Bounty,Parabioty,90 Capsules,Multivitamines,product,True,True,lot
+P019,,Vitamine D3 1000UI - Marque générique,Compléments Alimentaires / Vitamines,85,D3. Immunité & os,,60,Unités,Marque générique,Inty,60 Capsules,D3,product,True,True,lot
+P004,,Lotion Hydratante Corps - Cétaphil,Corps / Hydratation,180,Glycérine. Très sèche,,500,ml,Cétaphil,24hPara,500 ml,Glycérine,product,True,True,lot
+P015,,Atoderm Lotion - Bioderma,Corps / Hydratation,180,Nutritif. Peau irritée,,400,ml,Bioderma,Paranova,400 ml,Nutritif,product,True,True,lot
+P022,,Huile nourrissante corps - Green Mood,Corps / Nutrition,145,Argan. Cosmétiques naturels,,100,ml,Green Mood,NovaPara,100 ml,Argan,product,True,True,lot
+P021,,Lotion antiseptique - Marque santé,Hygiène / Soins premiers secours,75,Antiseptique. Désinfection,,200,ml,Marque santé,Côté Para,200 ml,Antiseptique,product,True,True,lot
+P002,3337875797580,Fluide SPF 50+ - La Roche-Posay,Solaire / Protection Solaire,180,SPF 50+. Anti-UV haute protection,,50,ml,La Roche-Posay,LaMaisonPara,50 ml,SPF 50+,product,True,True,lot
+P014,,Photoderm MAX SPF100 - Bioderma,Solaire / Protection ultra,220,SPF 100. Très haute protection,,40,ml,Bioderma,LaMaisonPara,40 ml,SPF 100,product,True,True,lot
+P001,301871373164,Crème Hydratante Visage - Cerave,Visage / Hydratation,137,Céramides. Peau normale à sèche,,236,ml,Cerave,LaMaisonPara,236 ml,Céramides,product,True,True,lot
+P003,3337872411083,Gel Moussant Purifiant - La Roche-Posay,Visage / Nettoyant,158,Acide salicylique. Peau grasse,,200,ml,La Roche-Posay,24hPara,200 ml,Acide salicylique,product,True,True,lot
+P009,3504105028619,Sérum Anti-âge - Vichy,Visage / Anti-âge,200,Vitamine C. Anti-taches & éclat,,30,ml,Vichy,HeyPara,30 ml,Vitamine C,product,True,True,lot
+P010,3504100102871,Crème Anti-âge Nuit - Filorga,Visage / Anti-âge,615,Rétinol. Anti-rides,,50,ml,Filorga,LaMaisonPara,50 ml,Rétinol,product,True,True,lot
+P013,,Eau thermale apaisante - La Roche-Posay,Visage / Hydratation,90,Eau thermale. Calme peau sensible,,150,ml,La Roche-Posay,LaMaisonPara,150 ml,Eau thermale,product,True,True,lot
+P016,,Normaderm Gel Purifiant - Vichy,Visage / Traitement Acné,150,Purifiant. Peaux mixtes,,200,ml,Vichy,Mapara,200 ml,Purifiant,product,True,True,lot
+P018,,Eaux micellaires - Bioderma,Visage / Démaquillant,130,Micellaire. Nettoyage quotidien,,250,ml,Bioderma,LaMaisonPara,250 ml,Micellaire,product,True,True,lot

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Layout de base pour les pages publiques de signature -->
+    <template id="layout_sign" name="PARABOX Sign Layout">
+        <t t-call="web.layout">
+            <t t-set="head">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+                <title>Signature PARABOX</title>
+            </t>
+            <body class="parabox-sign">
+                <t t-out="0"/>
+            </body>
+        </t>
+    </template>
+
+    <!-- Page de signature principale -->
+    <template id="page_sign_form" name="Page Signature BL">
+        <t t-call="parabox_sign.layout_sign">
+            <div class="sign-container">
+                <!-- Header -->
+                <div class="sign-header">
+                    <h2><i class="fa fa-pencil"/> Signature de livraison</h2>
+                    <div class="bl-name">
+                        <t t-esc="sign_req.picking_id.name"/>
+                    </div>
+                </div>
+
+                <!-- Card principale -->
+                <div class="sign-card">
+                    <!-- Info client -->
+                    <div class="client-info">
+                        <p><i class="fa fa-user"/> <strong><t t-esc="sign_req.client_id.name"/></strong></p>
+                        <p><i class="fa fa-truck"/> Livreur : <t t-esc="sign_req.livreur_id.name"/></p>
+                    </div>
+
+                    <!-- Token caché -->
+                    <input type="hidden" id="sign-token" t-att-value="token"/>
+
+                    <div id="sign-form-container">
+                        <!-- SECTION OTP -->
+                        <div id="otp-section" class="otp-section"
+                             t-if="otp_required">
+                            <h3><i class="fa fa-lock"/> Etape 1 — Code de validation</h3>
+                            <p class="otp-hint">
+                                Un code à 6 chiffres a été envoyé à votre email.
+                                Entrez-le ci-dessous pour confirmer la livraison.
+                            </p>
+                            <input type="tel" id="otp-input" class="otp-input"
+                                   inputmode="numeric" maxlength="6"
+                                   placeholder="000000"
+                                   autocomplete="one-time-code"/>
+                            <div id="otp-message" style="display:none;margin-top:8px;"></div>
+                            <button id="btn-verify-otp" class="btn-primary" style="margin-top:12px;" disabled="disabled">
+                                Vérifier le code
+                            </button>
+                        </div>
+
+                        <!-- Mode dégradé warning -->
+                        <div id="degrade-warning" class="msg-warning" style="display:none;">
+                            <i class="fa fa-exclamation-triangle"/> <strong>Mode degrade active.</strong>
+                            La signature sera marquée "Sans OTP". L'ADV sera notifié.
+                        </div>
+
+                        <!-- SECTION SIGNATURE -->
+                        <div id="signature-section" class="signature-section"
+                             t-attf-class="signature-section #{'hidden' if otp_required else ''}">
+                            <h3><i class="fa fa-pencil"/> <t t-if="otp_required">Etape 2 — </t>Votre signature</h3>
+                            <canvas id="signature-canvas"></canvas>
+                            <p class="canvas-hint">Signez avec votre doigt ou le stylet</p>
+                            <button id="btn-clear-signature" class="btn-clear-sig">
+                                <i class="fa fa-eraser"/> Effacer et recommencer
+                            </button>
+
+                            <!-- GPS -->
+                            <div class="gps-section">
+                                <span class="gps-icon"><i class="fa fa-map-marker"/></span>
+                                <span id="gps-status" class="gps-status">Localisation désactivée</span>
+                            </div>
+                        </div>
+
+                        <!-- Message submit -->
+                        <div id="submit-message" style="display:none;"></div>
+
+                        <!-- Bouton valider -->
+                        <button id="btn-submit-signature" class="btn-primary" disabled="disabled">
+                            <i class="fa fa-check"/> Valider la signature
+                        </button>
+
+                        <!-- Mode dégradé -->
+                        <t t-if="otp_required">
+                            <button id="btn-degrade" class="btn-degrade">
+                                Je n'ai pas reçu le code → Signer sans OTP
+                            </button>
+                        </t>
+                    </div>
+
+                    <!-- Succès -->
+                    <div id="sign-success" class="success-page hidden">
+                        <div class="success-icon"><i class="fa fa-check-circle"/></div>
+                        <h2>Livraison confirmée !</h2>
+                        <p>Merci, votre signature a bien été enregistrée.</p>
+                        <p>Un email de confirmation vous a été envoyé.</p>
+                        <br/>
+                        <a id="pdf-download-link" class="btn-primary"
+                           style="display:none;text-decoration:none;text-align:center;padding:14px;">
+                            <i class="fa fa-file-pdf-o"/> Telecharger le BL signe
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div style="text-align:center;padding:16px;font-size:12px;color:#999;">
+                    PARABOX — Système de signature sécurisée
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Page : déjà signé -->
+    <template id="page_sign_already_done" name="BL déjà signé">
+        <t t-call="parabox_sign.layout_sign">
+            <div class="sign-container">
+                <div class="sign-card" style="margin-top:40px;">
+                    <div class="success-page">
+                        <div class="success-icon"><i class="fa fa-check-circle"/></div>
+                        <h2>Ce BL a déjà été signé</h2>
+                        <p>Le bon de livraison <strong><t t-esc="sign_req.picking_id.name"/></strong>
+                           a été signé le
+                           <t t-esc="sign_req.sign_datetime.strftime('%d/%m/%Y à %H:%M') if sign_req.sign_datetime else '-'"/>.
+                        </p>
+                        <t t-if="sign_req.pdf_signed">
+                            <a t-attf-href="/parabox/sign/pdf/#{sign_req.token}"
+                               class="btn-primary"
+                               style="display:inline-block;text-decoration:none;text-align:center;padding:14px;margin-top:16px;">
+                                <i class="fa fa-file-pdf-o"/> Telecharger le BL signe
+                            </a>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Page : lien invalide -->
+    <template id="page_sign_invalid" name="Lien invalide">
+        <t t-call="parabox_sign.layout_sign">
+            <div class="sign-container">
+                <div class="sign-card" style="margin-top:40px;text-align:center;padding:40px;">
+                    <div style="font-size:48px;margin-bottom:16px;"><i class="fa fa-times-circle" style="color:#e74c3c;"/></div>
+                    <h2 style="color:#e74c3c;">Lien invalide</h2>
+                    <p><t t-esc="message"/></p>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Ajout onglet Crédit sur la fiche client -->
+    <record id="view_partner_credit_form" model="ir.ui.view">
+        <field name="name">res.partner.credit.form</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Crédit PARABOX" name="credit_parabox">
+                    <group string="Limite de crédit">
+                        <field name="credit_limit" widget="monetary"
+                               options="{'currency_field': 'currency_id'}"/>
+                        <field name="credit_hold"/>
+                        <field name="encours_actuel" widget="monetary"
+                               options="{'currency_field': 'currency_id'}"
+                               invisible="[('customer_rank', '=', 0)]"/>
+                        <field name="taux_utilisation_credit" string="Utilisation (%)"
+                               widget="percentage"
+                               invisible="[('customer_rank', '=', 0)]"/>
+                    </group>
+                    <div invisible="[('taux_utilisation_credit', '&lt;', 80)]">
+                        <div class="alert alert-warning" role="alert">
+                            <strong>Attention :</strong> Ce client approche ou dépasse sa limite de crédit.
+                        </div>
+                    </div>
+                </page>
+            </notebook>
+        </field>
+    </record>
+</odoo>

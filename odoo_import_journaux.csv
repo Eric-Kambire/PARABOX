@@ -1,0 +1,8 @@
+name,code,type,comment
+Journal Ventes,VTE,sale,Factures clients B2B + PARASHOP
+Journal Achats,ACH,purchase,Factures fournisseurs / marketplaces
+Journal Avoirs,AVO,sale,Avoirs clients — lié ticket litige
+Banque Principale,BNK,bank,Compte bancaire principal PARABOX
+Caisse,CSE,cash,Caisse — encaissements PARASHOP POS
+Journal Opérations Diverses,OD,general,Écritures manuelles / ajustements
+Journal Stock,STK,general,Écritures de valorisation stock

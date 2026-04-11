@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Bouton dérogation sur la commande de vente -->
+    <record id="view_sale_order_credit_form" model="ir.ui.view">
+        <field name="name">sale.order.credit.form</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Boutons dérogation dans le header -->
+            <button name="action_confirm" position="before">
+                <button name="action_accorder_derogation"
+                        string="Accorder derogation"
+                        type="object"
+                        class="btn-success"
+                        invisible="['|', ('credit_hold_blocked', '=', False), ('credit_derogation', '=', True)]"/>
+                <button name="action_refuser_derogation"
+                        string="Refuser"
+                        type="object"
+                        class="btn-danger"
+                        invisible="[('credit_hold_blocked', '=', False)]"/>
+            </button>
+
+            <!-- Bannières alerte crédit sous le header -->
+            <field name="partner_id" position="before">
+                <div invisible="[('credit_hold_blocked', '=', False)]"
+                     class="alert alert-danger" role="alert">
+                    <strong>COMMANDE BLOQUEE — Dépassement limite de crédit.</strong>
+                    L'ADV doit accorder une dérogation pour confirmer.
+                </div>
+                <div invisible="['|', ('credit_derogation', '=', False), ('credit_derogation_by', '=', False)]"
+                     class="alert alert-success" role="alert">
+                    <strong>Derogation accordee</strong> par
+                    <field name="credit_derogation_by" readonly="1" nolabel="1"/>
+                    le <field name="credit_derogation_dt" readonly="1" nolabel="1"/>
+                </div>
+            </field>
+
+            <!-- Onglet Crédit &amp; Dérogation ajouté à la fin du notebook -->
+            <notebook position="inside">
+                <page string="Crédit &amp; Dérogation" name="credit_derogation_tab"
+                      invisible="[('credit_derogation', '=', False), ('credit_hold_blocked', '=', False)]">
+                    <group string="Informations dérogation">
+                        <field name="credit_hold_blocked" readonly="1"/>
+                        <field name="credit_derogation" readonly="1"/>
+                        <field name="credit_derogation_by" readonly="1"/>
+                        <field name="credit_derogation_dt" readonly="1"/>
+                        <field name="credit_derogation_note"/>
+                    </group>
+                </page>
+            </notebook>
+
+        </field>
+    </record>
+</odoo>
