@@ -106,18 +106,24 @@ class SaleOrder(models.Model):
             return
         adv_users = adv_group.users
         for user in adv_users:
-            order.activity_schedule(
-                'mail.mail_activity_data_todo',
-                user_id=user.id,
-                summary=_("Dérogation crédit requise — %s") % order.name,
-                note=_(
-                    "La commande %s pour %s nécessite une dérogation.\n"
-                    "Montant : %.2f DH | Limite : %.2f DH | Encours : %.2f DH"
-                ) % (
-                    order.name,
-                    order.partner_id.name,
-                    order.amount_total,
-                    order.partner_id.commercial_partner_id.credit_limit,
-                    order.partner_id.commercial_partner_id.encours_actuel,
-                ),
-            )
+            try:
+                order.with_context(mail_notrack=True).activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    user_id=user.id,
+                    summary=_("Dérogation crédit requise — %s") % order.name,
+                    note=_(
+                        "La commande %s pour %s nécessite une dérogation.\n"
+                        "Montant : %.2f DH | Limite : %.2f DH | Encours : %.2f DH"
+                    ) % (
+                        order.name,
+                        order.partner_id.name,
+                        order.amount_total,
+                        order.partner_id.commercial_partner_id.credit_limit,
+                        order.partner_id.commercial_partner_id.encours_actuel,
+                    ),
+                )
+            except Exception:
+                _logger.warning(
+                    "Impossible de créer l'activité dérogation pour %s (email non configuré)",
+                    order.name
+                )

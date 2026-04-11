@@ -148,7 +148,7 @@
                 otpInput.readOnly = true;
                 if (otpMsg) {
                     otpMsg.className = 'msg-success';
-                    otpMsg.textContent = '✅ ' + result.message;
+                    otpMsg.textContent = result.message;
                     otpMsg.style.display = 'block';
                 }
                 // Cacher le bouton, afficher section signature
@@ -159,7 +159,7 @@
                 otpInput.classList.add('invalid');
                 if (otpMsg) {
                     otpMsg.className = 'msg-error';
-                    otpMsg.textContent = '❌ ' + (result?.message || 'OTP incorrect');
+                    otpMsg.textContent = result?.message || 'OTP incorrect';
                     otpMsg.style.display = 'block';
                 }
                 verifyBtn.disabled = false;
@@ -181,7 +181,7 @@
         navigator.geolocation.getCurrentPosition(
             function (pos) {
                 gpsCoords = pos.coords.latitude.toFixed(6) + ',' + pos.coords.longitude.toFixed(6);
-                gpsStatus.textContent = '📍 ' + gpsCoords;
+                gpsStatus.textContent = gpsCoords;
             },
             function () {
                 gpsStatus.textContent = 'GPS non disponible';
@@ -268,17 +268,17 @@
                 }
             } else {
                 submitBtn.disabled = false;
-                submitBtn.textContent = '✍️ Valider la signature';
+                submitBtn.textContent = 'Valider la signature';
                 if (msgDiv) {
                     msgDiv.className = 'msg-error';
-                    msgDiv.textContent = '❌ ' + (result?.message || 'Erreur lors de la soumission.');
+                    msgDiv.textContent = result?.message || 'Erreur lors de la soumission.';
                     msgDiv.style.display = 'block';
                 }
             }
         })
         .catch(() => {
             submitBtn.disabled = false;
-            submitBtn.textContent = '✍️ Valider la signature';
+            submitBtn.textContent = 'Valider la signature';
         });
     }
 

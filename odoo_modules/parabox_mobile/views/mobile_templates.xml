@@ -227,6 +227,48 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.4);
            border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+/* ── QR Scanner Modal ── */
+.qr-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.92); flex-direction: column;
+    align-items: center; justify-content: center; padding: 20px;
+}
+.qr-overlay.active { display: flex; }
+.qr-header { color: white; font-size: 16px; font-weight: 700; margin-bottom: 16px;
+             text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.qr-header small { font-size: 12px; opacity: 0.65; font-weight: 400; }
+.qr-viewport { position: relative; width: 280px; height: 280px;
+               border-radius: 16px; overflow: hidden;
+               box-shadow: 0 0 0 4000px rgba(0,0,0,0.6); }
+.qr-viewport video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.qr-viewport canvas { display: none; }
+.qr-frame { position: absolute; inset: 0; pointer-events: none; }
+.qr-frame::before { content: ''; position: absolute; inset: 8px;
+                    border: 2px solid rgba(93,173,226,0.6); border-radius: 8px; }
+.qr-corner { position: absolute; width: 26px; height: 26px; border-color: #5dade2; border-style: solid; }
+.qr-corner.tl { top: 6px;    left: 6px;   border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
+.qr-corner.tr { top: 6px;    right: 6px;  border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
+.qr-corner.bl { bottom: 6px; left: 6px;   border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
+.qr-corner.br { bottom: 6px; right: 6px;  border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
+@keyframes scanLine { 0%,100% { top: 12px; } 50% { top: calc(100% - 16px); } }
+.qr-scan-line { position: absolute; left: 12px; right: 12px; height: 2px;
+                background: linear-gradient(90deg, transparent, #5dade2, transparent);
+                animation: scanLine 2s ease-in-out infinite; box-shadow: 0 0 8px #5dade2; }
+.qr-status { color: white; font-size: 13px; margin-top: 18px; text-align: center;
+             min-height: 22px; opacity: 0.85; max-width: 280px; }
+.qr-status.success { color: #2ecc71; font-weight: 700; font-size: 14px; opacity: 1; }
+.qr-status.error   { color: #e74c3c; opacity: 1; }
+.qr-btn-close { margin-top: 20px; background: rgba(255,255,255,0.12);
+                border: 1px solid rgba(255,255,255,0.25); color: white;
+                padding: 12px 36px; border-radius: 10px; font-size: 14px;
+                font-weight: 600; cursor: pointer; }
+.product-item.scan-match   { border-left-color: var(--success) !important; background: #f0fff4; }
+.product-item.scan-nomatch { border-left-color: var(--accent)  !important; background: #fff5f5; }
+.scan-badge { font-size: 11px; font-weight: 700; padding: 2px 8px;
+              border-radius: 10px; margin-top: 4px; display: inline-block; }
+.scan-badge.ok  { background: #d5f5e3; color: #1e8449; }
+.scan-badge.err { background: #fadbd8; color: #922b21; }
             ]]></style>
         </t>
         <body>
@@ -292,6 +334,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial
                 </div>
             </div>
 
+            <!-- Bouton Scanner un BL -->
+            <button onclick="openQRScanner('bl')" class="btn-mobile btn-secondary" style="margin-top:12px;background:linear-gradient(135deg,#1e3a5f,#2e5d9f);color:white;">
+                <i class="fa fa-qrcode"/> Scanner un BL
+            </button>
+
             <!-- Liste BL en cours -->
             <div t-if="not bls_data" class="empty-state">
                 <div class="empty-icon"><i class="fa fa-check-circle" style="font-size:56px;color:#27ae60;"/></div>
@@ -341,6 +388,215 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial
 
             <div style="height:28px;"></div>
         </div>
+
+        <!-- ── Modal QR Scanner (partagé home + détail) ───────────────── -->
+        <div id="qr-overlay" class="qr-overlay">
+            <div class="qr-header">
+                <span id="qr-title"><i class="fa fa-qrcode"/> Scanner un BL</span>
+                <small id="qr-subtitle">Pointez la caméra vers le QR code du bon de livraison</small>
+            </div>
+            <div class="qr-viewport" id="qr-viewport">
+                <video id="qr-video" autoplay="true" playsinline="true" muted="true"></video>
+                <canvas id="qr-canvas"></canvas>
+                <div class="qr-frame">
+                    <div class="qr-corner tl"></div>
+                    <div class="qr-corner tr"></div>
+                    <div class="qr-corner bl"></div>
+                    <div class="qr-corner br"></div>
+                    <div class="qr-scan-line"></div>
+                </div>
+            </div>
+            <div id="qr-status" class="qr-status">Recherche de QR code…</div>
+            <button class="qr-btn-close" onclick="closeQRScanner()">✕ Fermer</button>
+        </div>
+
+        <!-- jsQR lib -->
+        <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+        <script><![CDATA[
+const BASE_URL_HOME = window.location.origin;
+let _qrStream = null;
+let _qrMode   = 'bl';         // 'bl' ou 'product'
+let _qrPickingId = null;      // utilisé en mode product
+let _qrAnimFrame = null;
+let _qrLocked = false;        // empêche double-détection
+
+function openQRScanner(mode, pickingId) {
+    _qrMode      = mode || 'bl';
+    _qrPickingId = pickingId || null;
+    _qrLocked    = false;
+
+    const title    = document.getElementById('qr-title');
+    const subtitle = document.getElementById('qr-subtitle');
+    const status   = document.getElementById('qr-status');
+    const overlay  = document.getElementById('qr-overlay');
+
+    if (_qrMode === 'bl') {
+        title.innerHTML    = '<i class="fa fa-qrcode"></i> Scanner un BL';
+        subtitle.textContent = 'Pointez la caméra vers le QR code du bon de livraison';
+    } else {
+        title.innerHTML    = '<i class="fa fa-barcode"></i> Scanner un produit';
+        subtitle.textContent = 'Pointez la caméra vers le code-barres du produit';
+    }
+    status.className   = 'qr-status';
+    status.textContent = 'Initialisation de la caméra…';
+    overlay.classList.add('active');
+    _startCamera();
+}
+
+function closeQRScanner() {
+    _stopCamera();
+    document.getElementById('qr-overlay').classList.remove('active');
+}
+
+async function _startCamera() {
+    const video  = document.getElementById('qr-video');
+    const status = document.getElementById('qr-status');
+    try {
+        _qrStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        video.srcObject = _qrStream;
+        await video.play();
+        status.textContent = 'Recherche de code…';
+        _scanLoop();
+    } catch (err) {
+        status.className   = 'qr-status error';
+        if (err.name === 'NotAllowedError') {
+            status.textContent = 'Accès caméra refusé. Autorisez la caméra dans les paramètres du navigateur.';
+        } else if (err.name === 'NotFoundError') {
+            status.textContent = 'Aucune caméra disponible sur cet appareil.';
+        } else {
+            status.textContent = 'Erreur caméra : ' + err.message;
+        }
+    }
+}
+
+function _stopCamera() {
+    if (_qrAnimFrame) { cancelAnimationFrame(_qrAnimFrame); _qrAnimFrame = null; }
+    if (_qrStream) {
+        _qrStream.getTracks().forEach(t => t.stop());
+        _qrStream = null;
+    }
+    const video = document.getElementById('qr-video');
+    if (video) video.srcObject = null;
+}
+
+function _scanLoop() {
+    if (_qrLocked) return;
+    const video  = document.getElementById('qr-video');
+    const canvas = document.getElementById('qr-canvas');
+    const ctx    = canvas ? canvas.getContext('2d') : null;
+    if (!video || !canvas || !ctx) return;
+
+    if (video.readyState >= video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let result = null;
+        try { result = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' }); }
+        catch (_) {}
+        if (result && result.data) {
+            _qrLocked = true;
+            _onCodeDetected(result.data);
+            return;
+        }
+    }
+    _qrAnimFrame = requestAnimationFrame(_scanLoop);
+}
+
+async function _onCodeDetected(code) {
+    const status = document.getElementById('qr-status');
+    status.textContent = 'Code détecté : ' + code.substring(0, 40) + '…';
+
+    // Feedback vibration
+    if (navigator.vibrate) navigator.vibrate(80);
+
+    if (_qrMode === 'bl') {
+        status.textContent = 'Recherche du BL…';
+        try {
+            const resp = await fetch('/parabox/mobile/livreur/scan/bl', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({jsonrpc:'2.0', method:'call', id:1, params:{code: code}})
+            });
+            const data = await resp.json();
+            const r    = data.result || {};
+            if (r.success) {
+                status.className   = 'qr-status success';
+                status.textContent = 'BL trouvé : ' + r.name + ' — ' + r.partner;
+                _stopCamera();
+                setTimeout(() => { window.location.href = r.redirect; }, 800);
+            } else {
+                status.className   = 'qr-status error';
+                status.textContent = r.message || 'BL introuvable.';
+                setTimeout(() => { _qrLocked = false; _scanLoop(); }, 2500);
+            }
+        } catch (e) {
+            status.className   = 'qr-status error';
+            status.textContent = 'Erreur réseau — réessayez.';
+            setTimeout(() => { _qrLocked = false; _scanLoop(); }, 2500);
+        }
+    } else {
+        // Mode produit
+        status.textContent = 'Vérification du produit…';
+        try {
+            const resp = await fetch('/parabox/mobile/livreur/scan/product', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({jsonrpc:'2.0', method:'call', id:1,
+                    params:{barcode: code, picking_id: _qrPickingId}})
+            });
+            const data = await resp.json();
+            const r    = data.result || {};
+            if (r.success) {
+                closeQRScanner();
+                _highlightProduct(r);
+            } else {
+                status.className   = 'qr-status error';
+                status.textContent = r.message || 'Produit introuvable.';
+                setTimeout(() => { _qrLocked = false; _scanLoop(); }, 2500);
+            }
+        } catch (e) {
+            status.className   = 'qr-status error';
+            status.textContent = 'Erreur réseau — réessayez.';
+            setTimeout(() => { _qrLocked = false; _scanLoop(); }, 2500);
+        }
+    }
+}
+
+function _highlightProduct(product) {
+    // Chercher le produit dans la liste par son nom ou référence
+    const items = document.querySelectorAll('.product-item');
+    let matched = false;
+    items.forEach(item => {
+        const nameEl = item.querySelector('.product-name');
+        if (!nameEl) return;
+        const nameText = nameEl.textContent.trim().toLowerCase();
+        const searchTerm = (product.name || product.ref || '').toLowerCase();
+        if (searchTerm && nameText.includes(searchTerm.substring(0, 15))) {
+            item.classList.add('scan-match');
+            item.classList.remove('scan-nomatch');
+            let badge = item.querySelector('.scan-badge');
+            if (!badge) { badge = document.createElement('div'); badge.className = 'scan-badge ok'; item.querySelector('.product-info').appendChild(badge); }
+            badge.className = 'scan-badge ok';
+            badge.textContent = product.in_bl ? 'Scanné ✓ (' + product.qty_ordered + ')' : 'Trouvé (hors BL)';
+            item.scrollIntoView({behavior: 'smooth', block: 'center'});
+            matched = true;
+        }
+    });
+    if (!matched) {
+        // Afficher alerte si produit non trouvé dans la liste visuelle
+        const msg = document.getElementById('action-msg');
+        if (msg) {
+            msg.className   = 'msg-box msg-error';
+            msg.innerHTML   = '<i class="fa fa-times-circle msg-icon"></i><div><strong>' + product.name + '</strong>' +
+                              (product.in_bl ? ' — présent dans ce BL' : ' — <strong>absent de ce BL</strong>') + '</div>';
+            setTimeout(() => { msg.className = ''; msg.innerHTML = ''; }, 4000);
+        }
+    }
+}
+        ]]></script>
     </t>
 </template>
 
@@ -415,7 +671,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial
                 </div>
 
                 <!-- Produits -->
-                <div class="section-label">Produits à livrer (<t t-esc="len(lignes)"/>)</div>
+                <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;">
+                    <span>Produits à livrer (<t t-esc="len(lignes)"/>)</span>
+                    <button t-attf-onclick="openQRScanner('product', #{picking_id})"
+                            style="background:var(--primary-light);color:white;border:none;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">
+                        <i class="fa fa-barcode"/> Scanner produit
+                    </button>
+                </div>
                 <div t-if="not lignes" class="msg-box msg-warning">
                     <i class="fa fa-exclamation-triangle msg-icon"/>
                     <span>Aucun produit dans ce bon de livraison.</span>
@@ -591,6 +853,148 @@ const blState = ']]><t t-esc="bl.state"/><![CDATA[';
 let pollInterval = null;
 if (blState !== 'done' &amp;&amp; blState !== 'cancel') {
     pollInterval = setInterval(checkCancellation, 15000);
+}
+        ]]></script>
+
+        <!-- ── Modal QR Scanner (scan produit) ─────────────────────────── -->
+        <div id="qr-overlay" class="qr-overlay">
+            <div class="qr-header">
+                <span id="qr-title"><i class="fa fa-barcode"/> Scanner un produit</span>
+                <small id="qr-subtitle">Pointez la caméra vers le code-barres du produit</small>
+            </div>
+            <div class="qr-viewport" id="qr-viewport">
+                <video id="qr-video" autoplay="true" playsinline="true" muted="true"></video>
+                <canvas id="qr-canvas"></canvas>
+                <div class="qr-frame">
+                    <div class="qr-corner tl"></div>
+                    <div class="qr-corner tr"></div>
+                    <div class="qr-corner bl"></div>
+                    <div class="qr-corner br"></div>
+                    <div class="qr-scan-line"></div>
+                </div>
+            </div>
+            <div id="qr-status" class="qr-status">Recherche de code-barres…</div>
+            <button class="qr-btn-close" onclick="closeQRScanner()">✕ Fermer</button>
+        </div>
+
+        <!-- jsQR lib -->
+        <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+        <script><![CDATA[
+/* ── QR Scanner partagé — mode produit sur cette page ── */
+let _qrStream2 = null, _qrAnimFrame2 = null, _qrLocked2 = false;
+const _qrPickingId2 = PICKING_ID;
+
+function openQRScanner(mode, pickingId) {
+    _qrLocked2 = false;
+    const status = document.getElementById('qr-status');
+    status.className   = 'qr-status';
+    status.textContent = 'Initialisation de la caméra…';
+    document.getElementById('qr-overlay').classList.add('active');
+    _startCamera2();
+}
+
+function closeQRScanner() {
+    _stopCamera2();
+    document.getElementById('qr-overlay').classList.remove('active');
+}
+
+async function _startCamera2() {
+    const video  = document.getElementById('qr-video');
+    const status = document.getElementById('qr-status');
+    try {
+        _qrStream2 = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        video.srcObject = _qrStream2;
+        await video.play();
+        status.textContent = 'Pointez vers le code-barres du produit…';
+        _scanLoop2();
+    } catch (err) {
+        status.className   = 'qr-status error';
+        status.textContent = (err.name === 'NotAllowedError')
+            ? 'Accès caméra refusé. Autorisez la caméra dans les paramètres.'
+            : 'Caméra indisponible : ' + err.message;
+    }
+}
+
+function _stopCamera2() {
+    if (_qrAnimFrame2) { cancelAnimationFrame(_qrAnimFrame2); _qrAnimFrame2 = null; }
+    if (_qrStream2) { _qrStream2.getTracks().forEach(t => t.stop()); _qrStream2 = null; }
+    const v = document.getElementById('qr-video');
+    if (v) v.srcObject = null;
+}
+
+function _scanLoop2() {
+    if (_qrLocked2) return;
+    const video  = document.getElementById('qr-video');
+    const canvas = document.getElementById('qr-canvas');
+    const ctx    = canvas ? canvas.getContext('2d') : null;
+    if (!video || !canvas || !ctx) return;
+    if (video.readyState >= video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        let result = null;
+        try { result = jsQR(ctx.getImageData(0,0,canvas.width,canvas.height).data, canvas.width, canvas.height); } catch(_){}
+        if (result && result.data) { _qrLocked2 = true; _onProductScanned(result.data); return; }
+    }
+    _qrAnimFrame2 = requestAnimationFrame(_scanLoop2);
+}
+
+async function _onProductScanned(code) {
+    if (navigator.vibrate) navigator.vibrate(80);
+    const status = document.getElementById('qr-status');
+    status.textContent = 'Vérification : ' + code.substring(0, 30) + '…';
+    try {
+        const resp = await fetch('/parabox/mobile/livreur/scan/product', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({jsonrpc:'2.0',method:'call',id:1,
+                params:{barcode: code, picking_id: _qrPickingId2}})
+        });
+        const data = await resp.json();
+        const r    = data.result || {};
+        if (r.success) {
+            closeQRScanner();
+            _highlightProduct2(r);
+        } else {
+            status.className   = 'qr-status error';
+            status.textContent = r.message || 'Produit introuvable.';
+            setTimeout(() => { _qrLocked2 = false; _scanLoop2(); }, 2500);
+        }
+    } catch(e) {
+        status.className   = 'qr-status error';
+        status.textContent = 'Erreur réseau.';
+        setTimeout(() => { _qrLocked2 = false; _scanLoop2(); }, 2500);
+    }
+}
+
+function _highlightProduct2(product) {
+    const items = document.querySelectorAll('.product-item');
+    let matched = false;
+    const search = (product.ref || product.name || '').toLowerCase().substring(0, 20);
+    items.forEach(item => {
+        const nameEl = item.querySelector('.product-name');
+        if (!nameEl) return;
+        if (nameEl.textContent.trim().toLowerCase().includes(search)) {
+            item.classList.add('scan-match'); item.classList.remove('scan-nomatch');
+            let badge = item.querySelector('.scan-badge');
+            if (!badge) { badge = document.createElement('div'); item.querySelector('.product-info').appendChild(badge); }
+            badge.className   = 'scan-badge ok';
+            badge.textContent = product.in_bl ? 'Scanné ✓ (qté: ' + product.qty_ordered + ')' : 'Trouvé (hors BL)';
+            item.scrollIntoView({behavior:'smooth', block:'center'});
+            matched = true;
+        }
+    });
+    if (!matched) {
+        const msg = document.getElementById('action-msg');
+        if (msg) {
+            msg.className = product.in_bl ? 'msg-box msg-success' : 'msg-box msg-error';
+            msg.innerHTML = '<i class="fa fa-' + (product.in_bl ? 'check-circle' : 'times-circle') + ' msg-icon"></i>' +
+                '<div><strong>' + product.name + '</strong> — ' +
+                (product.in_bl ? 'Présent dans ce BL (qté: ' + product.qty_ordered + ')' : 'Absent de ce BL') + '</div>';
+            setTimeout(() => { msg.className=''; msg.innerHTML=''; }, 4000);
+        }
+    }
 }
         ]]></script>
     </t>

@@ -32,10 +32,17 @@ class StockPicking(models.Model):
 
     def _action_done(self):
         """Surcharge Odoo 17 : auto-créer les lignes de traçabilité depuis les move.lines."""
+        # Ne pas appeler _message_compute_author ici — laisser super() gérer les emails
         res = super()._action_done()
         for picking in self:
             if picking.picking_type_code == 'outgoing':
-                picking._auto_create_logistics_lines()
+                try:
+                    picking._auto_create_logistics_lines()
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).warning(
+                        "Erreur auto-création lignes traçabilité picking %s: %s", picking.id, e
+                    )
         return res
 
     def _auto_create_logistics_lines(self):
