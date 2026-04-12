@@ -505,63 +505,41 @@ function _scanLoop() {
     _qrAnimFrame = requestAnimationFrame(_scanLoop);
 }
 
-async function _onCodeDetected(code) {
-    const status = document.getElementById('qr-status');
-    status.textContent = 'Code détecté : ' + code.substring(0, 40) + '…';
-
-    // Feedback vibration
+function _onCodeDetected(code) {
+    if (_qrLocked) return;
+    _qrLocked = true;
     if (navigator.vibrate) navigator.vibrate(80);
-
+    _stopCamera(); closeQRScanner();
+    const c = code.trim();
+    /* RPC helper — synchronous XHR, no &amp;&amp; operator */
+    const rpcSync = (model, domain, fields) => {
+        const x = new XMLHttpRequest();
+        x.open('POST', '/web/dataset/call_kw', false);
+        x.setRequestHeader('Content-Type', 'application/json');
+        x.send(JSON.stringify({jsonrpc:'2.0',method:'call',id:Date.now(),params:{
+            model:model,method:'search_read',args:[domain],
+            kwargs:{fields:fields,limit:1,context:{}}}}));
+        const d = JSON.parse(x.responseText);
+        return d.result ? d.result[0] : null;
+    };
     if (_qrMode === 'bl') {
-        status.textContent = 'Recherche du BL…';
-        try {
-            const resp = await fetch('/parabox/mobile/livreur/scan/bl', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({jsonrpc:'2.0', method:'call', id:1, params:{code: code}})
-            });
-            const data = await resp.json();
-            const r    = data.result || {};
-            if (r.success) {
-                status.className   = 'qr-status success';
-                status.textContent = 'BL trouvé : ' + r.name + ' — ' + r.partner;
-                _stopCamera();
-                setTimeout(() => { window.location.href = r.redirect; }, 800);
-            } else {
-                status.className   = 'qr-status error';
-                status.textContent = r.message || 'BL introuvable.';
-                setTimeout(() => { _qrLocked = false; _scanLoop(); }, 2500);
-            }
-        } catch (e) {
-            status.className   = 'qr-status error';
-            status.textContent = 'Erreur réseau — réessayez.';
-            setTimeout(() => { _qrLocked = false; _scanLoop(); }, 2500);
+        if (c.includes('/livreur/bl/')) {
+            try {
+                const pid = parseInt(c.split('/livreur/bl/')[1].split('/')[0].split('?')[0]);
+                if (!isNaN(pid)) { window.location.href = '/parabox/mobile/livreur/bl/' + pid; return; }
+            } catch(_e) {}
         }
+        let bl = rpcSync('stock.picking',[['name','=',c],['picking_type_code','=','outgoing']],['id','name']);
+        if (!bl) bl = rpcSync('stock.picking',[['origin','=',c],['picking_type_code','=','outgoing'],['state','not in',['done','cancel']]],['id','name']);
+        if (!bl) bl = rpcSync('stock.picking',[['name','ilike',c],['picking_type_code','=','outgoing'],['state','not in',['done','cancel']]],['id','name']);
+        if (bl) { window.location.href = '/parabox/mobile/livreur/bl/' + bl.id; }
+        else { alert('Aucun BL trouvé pour : ' + c); _qrLocked = false; }
     } else {
-        // Mode produit
-        status.textContent = 'Vérification du produit…';
-        try {
-            const resp = await fetch('/parabox/mobile/livreur/scan/product', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({jsonrpc:'2.0', method:'call', id:1,
-                    params:{barcode: code, picking_id: _qrPickingId}})
-            });
-            const data = await resp.json();
-            const r    = data.result || {};
-            if (r.success) {
-                closeQRScanner();
-                _highlightProduct(r);
-            } else {
-                status.className   = 'qr-status error';
-                status.textContent = r.message || 'Produit introuvable.';
-                setTimeout(() => { _qrLocked = false; _scanLoop(); }, 2500);
-            }
-        } catch (e) {
-            status.className   = 'qr-status error';
-            status.textContent = 'Erreur réseau — réessayez.';
-            setTimeout(() => { _qrLocked = false; _scanLoop(); }, 2500);
-        }
+        let prod = rpcSync('product.product',[['barcode','=',c]],['id','display_name','barcode','default_code']);
+        if (!prod) prod = rpcSync('product.product',[['default_code','=',c]],['id','display_name','barcode','default_code']);
+        if (!prod) { alert('Produit introuvable : ' + c); _qrLocked = false; return; }
+        alert(prod.display_name + ' — Code: ' + (prod.barcode || prod.default_code || c));
+        _qrLocked = false;
     }
 }
 
@@ -851,7 +829,7 @@ async function checkCancellation() {
 // Démarrer le polling seulement si le BL n'est pas déjà annulé ou terminé
 const blState = ']]><t t-esc="bl.state"/><![CDATA[';
 let pollInterval = null;
-if (blState !== 'done' &amp;&amp; blState !== 'cancel') {
+if (blState !== 'done' && blState !== 'cancel') {
     pollInterval = setInterval(checkCancellation, 15000);
 }
         ]]></script>
@@ -940,32 +918,40 @@ function _scanLoop2() {
     _qrAnimFrame2 = requestAnimationFrame(_scanLoop2);
 }
 
-async function _onProductScanned(code) {
+function _onProductScanned(code) {
+    if (_qrLocked2) return;
+    _qrLocked2 = true;
     if (navigator.vibrate) navigator.vibrate(80);
-    const status = document.getElementById('qr-status');
-    status.textContent = 'Vérification : ' + code.substring(0, 30) + '…';
-    try {
-        const resp = await fetch('/parabox/mobile/livreur/scan/product', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({jsonrpc:'2.0',method:'call',id:1,
-                params:{barcode: code, picking_id: _qrPickingId2}})
-        });
-        const data = await resp.json();
-        const r    = data.result || {};
-        if (r.success) {
-            closeQRScanner();
-            _highlightProduct2(r);
-        } else {
-            status.className   = 'qr-status error';
-            status.textContent = r.message || 'Produit introuvable.';
-            setTimeout(() => { _qrLocked2 = false; _scanLoop2(); }, 2500);
-        }
-    } catch(e) {
-        status.className   = 'qr-status error';
-        status.textContent = 'Erreur réseau.';
-        setTimeout(() => { _qrLocked2 = false; _scanLoop2(); }, 2500);
+    closeQRScanner();
+    const c = code.trim();
+    /* RPC helper — synchronous XHR, no &amp;&amp; operator */
+    const rpcSync = (model, domain, fields) => {
+        const x = new XMLHttpRequest();
+        x.open('POST', '/web/dataset/call_kw', false);
+        x.setRequestHeader('Content-Type', 'application/json');
+        x.send(JSON.stringify({jsonrpc:'2.0',method:'call',id:Date.now(),params:{
+            model:model,method:'search_read',args:[domain],
+            kwargs:{fields:fields,limit:1,context:{}}}}));
+        const d = JSON.parse(x.responseText);
+        return d.result ? d.result[0] : null;
+    };
+    let prod = rpcSync('product.product',[['barcode','=',c]],['id','display_name','barcode','default_code']);
+    if (!prod) prod = rpcSync('product.product',[['default_code','=',c]],['id','display_name','barcode','default_code']);
+    if (!prod) { alert('Produit introuvable : ' + c); _qrLocked2 = false; return; }
+    const pid = window.PICKING_ID;
+    let inBL = false, qtyOrdered = 0;
+    if (pid) {
+        const move = rpcSync('stock.move',
+            [['picking_id','=',pid],['product_id','=',prod.id],['state','!=','cancel']],
+            ['id','product_uom_qty']);
+        if (move) { inBL = true; qtyOrdered = move.product_uom_qty || 0; }
     }
+    const msg = inBL
+        ? '✅ ' + prod.display_name + '\nQté commandée : ' + qtyOrdered
+        : '⚠️ ' + prod.display_name + '\nCe produit n\'est PAS dans ce BL !';
+    alert(msg);
+    if (inBL) _highlightProduct2({name: prod.display_name, in_bl: true, qty_ordered: qtyOrdered});
+    _qrLocked2 = false;
 }
 
 function _highlightProduct2(product) {
