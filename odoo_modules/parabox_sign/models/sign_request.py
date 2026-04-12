@@ -151,7 +151,7 @@ class ParaboxSignRequest(models.Model):
         ('failed', 'Echec'),
     ], string='Statut', default='draft', required=True, tracking=True)
 
-    # ─── Méthodes ─────────────────────────────────────────────────────────────
+    # ─── Méthodes privées ─────────────────────────────────────────────────────
 
     @staticmethod
     def _generate_token():
@@ -164,6 +164,22 @@ class ParaboxSignRequest(models.Model):
         """Hash SHA-256 d'un OTP en clair."""
         return hashlib.sha256(otp_plain.encode('utf-8')).hexdigest()
 
+    def _log(self, action, ip_address='', user_agent='', detail=''):
+        """Crée une entrée dans le journal d'audit parabox.sign.log."""
+        self.ensure_one()
+        try:
+            self.env['parabox.sign.log'].sudo().create({
+                'sign_request_id': self.id,
+                'action': action,
+                'ip_address': ip_address or '',
+                'user_agent': user_agent or '',
+                'detail': detail or '',
+            })
+        except Exception as e:
+            _logger.error("Erreur écriture sign.log (%s, action=%s): %s", self.name, action, e)
+
+    # ─── CRUD ─────────────────────────────────────────────────────────────────
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -172,6 +188,8 @@ class ParaboxSignRequest(models.Model):
             if not vals.get('token'):
                 vals['token'] = self._generate_token()
         return super().create(vals_list)
+
+    # ─── OTP ─────────────────────────────────────────────────────────────────
 
     def action_send_otp(self):
         """Génère et envoie l'OTP par email au client."""
@@ -191,6 +209,12 @@ class ParaboxSignRequest(models.Model):
             'otp_attempts': 0,
             'statut': 'otp_sent',
         })
+
+        # ── Journal d'audit ──────────────────────────────────────────────────
+        self._log(
+            action='otp_sent',
+            detail=_("OTP envoyé à %s pour BL %s") % (self.client_id.email, self.picking_id.name),
+        )
 
         # Construire l'URL de signature
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', 'http://localhost:8069')
@@ -226,16 +250,31 @@ class ParaboxSignRequest(models.Model):
         _logger.info("OTP envoyé à %s pour BL %s", self.client_id.email, self.picking_id.name)
         return True
 
-    def verify_otp(self, otp_input):
-        """Vérifie l'OTP saisi. Retourne (True, msg) ou (False, msg)."""
+    def verify_otp(self, otp_input, ip_address='', user_agent=''):
+        """
+        Vérifie l'OTP saisi. Retourne (True, msg) ou (False, msg).
+        Écrit systématiquement dans parabox.sign.log.
+        """
         self.ensure_one()
 
         # Limite tentatives
         if self.otp_attempts >= 5:
+            self._log(
+                action='otp_fail',
+                ip_address=ip_address,
+                user_agent=user_agent,
+                detail=_("Trop de tentatives — OTP bloqué pour %s") % self.picking_id.name,
+            )
             return False, _("Trop de tentatives incorrectes. Demandez un nouvel OTP.")
 
         # Vérification expiration
         if fields.Datetime.now() > self.otp_expiry:
+            self._log(
+                action='otp_expired',
+                ip_address=ip_address,
+                user_agent=user_agent,
+                detail=_("OTP expiré pour %s") % self.picking_id.name,
+            )
             return False, _("L'OTP a expiré. Demandez un nouvel OTP.")
 
         # Vérification hash
@@ -243,10 +282,25 @@ class ParaboxSignRequest(models.Model):
         if otp_hash != self.otp_hash:
             self.sudo().write({'otp_attempts': self.otp_attempts + 1})
             remaining = 5 - self.otp_attempts - 1
+            self._log(
+                action='otp_fail',
+                ip_address=ip_address,
+                user_agent=user_agent,
+                detail=_("OTP incorrect pour %s — tentative %d/5") % (self.picking_id.name, self.otp_attempts),
+            )
             return False, _("OTP incorrect. %d tentative(s) restante(s).") % max(0, remaining)
 
+        # ── Succès ───────────────────────────────────────────────────────────
         self.sudo().write({'otp_verified': True})
+        self._log(
+            action='otp_ok',
+            ip_address=ip_address,
+            user_agent=user_agent,
+            detail=_("OTP validé avec succès pour %s") % self.picking_id.name,
+        )
         return True, _("OTP validé avec succès.")
+
+    # ─── Signature ────────────────────────────────────────────────────────────
 
     def save_signature(self, signature_b64, sign_ip=None, sign_user_agent=None, sign_gps=None, otp_verified=False):
         """Enregistre la signature et génère le PDF signé."""
@@ -264,11 +318,37 @@ class ParaboxSignRequest(models.Model):
             'statut': 'signed',
         })
 
+        # ── Journal d'audit — signature ──────────────────────────────────────
+        action_log = 'signed' if mode == 'otp' else 'signed_degrade'
+        self._log(
+            action=action_log,
+            ip_address=sign_ip or '',
+            user_agent=sign_user_agent or '',
+            detail=_("BL %s signé par %s (mode: %s, GPS: %s)") % (
+                self.picking_id.name,
+                self.client_id.name,
+                mode,
+                sign_gps or 'N/A',
+            ),
+        )
+
         # Générer le PDF signé
+        pdf_ok = False
         try:
             self._generate_signed_pdf()
+            pdf_ok = True
         except Exception as e:
             _logger.error("Erreur génération PDF signé: %s", e)
+
+        # ── Journal d'audit — PDF ────────────────────────────────────────────
+        if pdf_ok:
+            self._log(
+                action='pdf_generated',
+                detail=_("PDF signé généré — fichier: %s — hash: %s") % (
+                    self.pdf_filename or '',
+                    (self.pdf_hash or '')[:16] + '...' if self.pdf_hash else '',
+                ),
+            )
 
         # Alerte ADV en mode dégradé
         if mode == 'degrade':
@@ -276,6 +356,8 @@ class ParaboxSignRequest(models.Model):
 
         _logger.info("BL %s signé par %s (mode: %s)", self.picking_id.name, self.client_id.name, mode)
         return True
+
+    # ─── PDF ─────────────────────────────────────────────────────────────────
 
     def _generate_signed_pdf(self):
         """Génère le PDF BL avec la signature incrustée (via reportlab)."""
@@ -339,6 +421,8 @@ class ParaboxSignRequest(models.Model):
             _logger.error("Erreur génération PDF: %s", e)
             raise
 
+    # ─── Alertes ─────────────────────────────────────────────────────────────
+
     def _alert_adv_degrade(self):
         """Alerte l'ADV en cas de signature sans OTP."""
         adv_group = self.env.ref('sales_team.group_sale_manager', raise_if_not_found=False)
@@ -352,6 +436,8 @@ class ParaboxSignRequest(models.Model):
                     % (self.picking_id.name, self.client_id.name),
                 )
 
+    # ─── Intégrité PDF ───────────────────────────────────────────────────────
+
     def action_check_pdf_integrity(self):
         """Vérifie que le PDF n'a pas été modifié (hash SHA-256)."""
         self.ensure_one()
@@ -359,7 +445,12 @@ class ParaboxSignRequest(models.Model):
             raise UserError(_("Pas de PDF signé à vérifier."))
         pdf_bytes = base64.b64decode(self.pdf_signed)
         current_hash = hashlib.sha256(pdf_bytes).hexdigest()
+
         if current_hash == self.pdf_hash:
+            self._log(
+                action='integrity_ok',
+                detail=_("Intégrité vérifiée — hash: %s") % current_hash[:16] + '...',
+            )
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
@@ -370,6 +461,11 @@ class ParaboxSignRequest(models.Model):
                 }
             }
         else:
+            self._log(
+                action='integrity_fail',
+                detail=_("FRAUDE DETECTEE — hash attendu: %s... — hash actuel: %s...") % (
+                    self.pdf_hash[:16], current_hash[:16]),
+            )
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',

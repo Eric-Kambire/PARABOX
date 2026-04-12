@@ -9,15 +9,35 @@ _logger = logging.getLogger(__name__)
 class ParaboxSignController(http.Controller):
     """Routes HTTP pour la signature BL PARABOX."""
 
+    # ─── Helpers privés ───────────────────────────────────────────────────────
+
+    def _get_sign_req(self, token):
+        """Retourne la sign request correspondant au token, ou None."""
+        return request.env['parabox.sign.request'].sudo().search(
+            [('token', '=', token)], limit=1
+        )
+
+    def _client_ip(self):
+        """Récupère l'adresse IP du client (gère les proxies X-Forwarded-For)."""
+        forwarded = request.httprequest.headers.get('X-Forwarded-For')
+        if forwarded:
+            return forwarded.split(',')[0].strip()
+        return request.httprequest.remote_addr or ''
+
+    def _client_ua(self):
+        """Récupère le User-Agent du client."""
+        ua = request.httprequest.user_agent
+        return ua.string if ua else ''
+
+    # ─── Page principale ──────────────────────────────────────────────────────
+
     @http.route('/parabox/sign/<string:token>', type='http', auth='public', website=True, csrf=False)
     def sign_page(self, token, **kwargs):
         """
         Page principale de signature.
         Accessible sans login depuis n'importe quel appareil.
         """
-        sign_req = request.env['parabox.sign.request'].sudo().search(
-            [('token', '=', token)], limit=1
-        )
+        sign_req = self._get_sign_req(token)
         if not sign_req:
             return request.render('parabox_sign.page_sign_invalid', {
                 'message': _("Lien de signature invalide ou expiré.")
@@ -32,20 +52,58 @@ class ParaboxSignController(http.Controller):
             'otp_required': sign_req.mode == 'otp' and not sign_req.otp_verified,
         })
 
+    # ─── Envoi OTP (ROUTE AJOUTÉE) ────────────────────────────────────────────
+
+    @http.route('/parabox/sign/send-otp', type='json', auth='public', csrf=False)
+    def send_otp(self, token, **kwargs):
+        """
+        Envoie l'OTP au client par email.
+        Appelé depuis la page de signature mobile quand le livreur clique
+        sur "Envoyer le code de validation".
+        Retourne JSON: {success: bool, message: str}
+        """
+        sign_req = self._get_sign_req(token)
+        if not sign_req:
+            return {'success': False, 'message': _("Demande de signature introuvable.")}
+
+        if sign_req.signed:
+            return {'success': False, 'message': _("Ce BL a déjà été signé.")}
+
+        if not sign_req.client_id.email:
+            return {
+                'success': False,
+                'message': _("Le client '%s' n'a pas d'adresse email configurée.") % sign_req.client_id.name,
+            }
+
+        try:
+            sign_req.action_send_otp()
+            return {
+                'success': True,
+                'message': _("Code envoyé à %s") % sign_req.client_id.email,
+            }
+        except Exception as e:
+            _logger.error("Erreur envoi OTP (token=%s): %s", token, e)
+            return {'success': False, 'message': _("Erreur lors de l'envoi du code : %s") % str(e)}
+
+    # ─── Vérification OTP ─────────────────────────────────────────────────────
+
     @http.route('/parabox/sign/verify-otp', type='json', auth='public', csrf=False)
     def verify_otp(self, token, otp, **kwargs):
         """
         Vérifie l'OTP entré par le client.
         Retourne JSON: {success: bool, message: str}
         """
-        sign_req = request.env['parabox.sign.request'].sudo().search(
-            [('token', '=', token)], limit=1
-        )
+        sign_req = self._get_sign_req(token)
         if not sign_req:
             return {'success': False, 'message': _("Demande introuvable.")}
 
-        ok, msg = sign_req.verify_otp(otp)
+        ip = self._client_ip()
+        ua = self._client_ua()
+
+        ok, msg = sign_req.verify_otp(otp, ip_address=ip, user_agent=ua)
         return {'success': ok, 'message': msg}
+
+    # ─── Soumission signature ─────────────────────────────────────────────────
 
     @http.route('/parabox/sign/submit', type='json', auth='public', csrf=False)
     def submit_signature(self, token, signature_b64, otp_verified=False,
@@ -54,17 +112,15 @@ class ParaboxSignController(http.Controller):
         Enregistre la signature et génère le PDF.
         Retourne JSON: {success: bool, message: str, pdf_url: str|None}
         """
-        sign_req = request.env['parabox.sign.request'].sudo().search(
-            [('token', '=', token)], limit=1
-        )
+        sign_req = self._get_sign_req(token)
         if not sign_req:
             return {'success': False, 'message': _("Demande introuvable.")}
         if sign_req.signed:
             return {'success': False, 'message': _("Ce BL a déjà été signé.")}
 
         # Récupération IP et User-Agent
-        sign_ip = request.httprequest.remote_addr
-        sign_ua = request.httprequest.user_agent.string if request.httprequest.user_agent else ''
+        sign_ip = self._client_ip()
+        sign_ua = self._client_ua()
 
         # Enlever le préfixe data:image/... si présent
         if signature_b64 and ',' in signature_b64:
@@ -89,6 +145,8 @@ class ParaboxSignController(http.Controller):
             'signed': True,
         }
 
+    # ─── Téléchargement PDF ───────────────────────────────────────────────────
+
     @http.route('/parabox/sign/pdf/<string:token>', type='http', auth='public')
     def download_signed_pdf(self, token, **kwargs):
         """Télécharge le PDF signé."""
@@ -110,6 +168,8 @@ class ParaboxSignController(http.Controller):
                 ('Content-Length', len(pdf_bytes)),
             ]
         )
+
+    # ─── Vérification intégrité ───────────────────────────────────────────────
 
     @http.route('/parabox/sign/check-integrity', type='json', auth='user', csrf=False)
     def check_integrity(self, sign_request_id, **kwargs):
