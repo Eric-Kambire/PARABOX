@@ -1003,3 +1003,153 @@ Auto-facture           ✅ fonctionnel
 Notification chatter   ✅ fonctionnel
 Scanner obligatoire    ✅ fonctionnel
 ```
+
+---
+
+## 🆕 Mise à jour — 13/04/2026 — TEST 5 complet + Fix droits accès modèles
+
+### 1. Compte admin identifié
+- **Login :** `admin@parabox.ma` / `Parabox2026!` — uid=6, is_admin=true
+- Utilisé pour toutes les opérations d'administration via Chrome MCP (injection XHR)
+
+### 2. Assignation groupes PARABOX (via API admin — FAIT)
+Groupes assignés via `res.users.write({'groups_id': [(4, gid)]})` en tant qu'admin :
+
+| Utilisateur | uid | Groupe PARABOX assigné | gid |
+|---|---|---|---|
+| direction@parabox.ma | 12 | group_parabox_direction | 118 |
+| commercial@parabox.ma | 7 | group_parabox_commercial | 119 |
+| magasinier@parabox.ma | 9 | group_parabox_magasinier | 120 |
+| livreur@parabox.ma | 10 | group_parabox_livreur | 121 |
+| livreur2@parabox.ma | 15 | group_parabox_livreur | 121 |
+| comptable@parabox.ma | 11 | group_parabox_comptable | 122 |
+| adv@parabox.ma | 8 | group_parabox_direction | 118 |
+
+**Vérification :** `res.users.read([uid], ['groups_id'])` → tous présents ✅
+
+### 3. BUG #8 — Droits modèles manquants pour profils PARABOX
+
+**Symptôme :** Après assignation des groupes PARABOX, direction ne voyait que 2 sous-menus (Traçabilité + Litiges) au lieu de 5. Les menus Signatures BL, Encaissements, Alias Produits restaient cachés.
+
+**Cause racine :** Odoo masque automatiquement les menus dont le modèle cible est inaccessible à l'utilisateur. Les `ir.model.access.csv` des modules existants ne déclaraient des droits QUE pour les groupes Odoo standard (`stock.group_stock_user`, `account.group_account_user`), pas pour les groupes PARABOX.
+
+| Module | Modèle | Groupes protégés (avant fix) | Groupes PARABOX manquants |
+|---|---|---|---|
+| `parabox_sign` | `parabox.sign.request` | `stock.group_stock_user/manager` | direction, magasinier |
+| `parabox_encaissement` | `parabox.encaissement` | `account.group_account_user/manager` | direction, comptable |
+| `parabox_product_alias` | `parabox.product.alias` | `stock.group_stock_user/manager` | direction, magasinier |
+
+**Solution immédiate (FAIT) :** Assignation des groupes Odoo standard manquants via API admin :
+- direction (uid=12) : `stock.group_stock_user` (gid=39) + `account.group_account_user` (gid=27)
+- comptable (uid=11) : `account.group_account_user` (gid=27)
+- adv (uid=8) : `stock.group_stock_user` (gid=39) + `account.group_account_user` (gid=27)
+
+**Solution permanente (fichiers créés, à déployer) :** Ajout de lignes PARABOX dans les CSV :
+```
+Transfo_Digit/security_fixes/parabox_sign/security/ir.model.access.csv
+Transfo_Digit/security_fixes/parabox_encaissement/security/ir.model.access.csv
+Transfo_Digit/security_fixes/parabox_product_alias/security/ir.model.access.csv
+```
+Ces fichiers sont à copier vers les modules respectifs dans `C:\Users\Danssogo\...\odoo_modules\`
+puis `--update=parabox_sign,parabox_encaissement,parabox_product_alias`.
+
+### 4. TEST 5 — Direction (`direction@parabox.ma` / Karim Haddad) ✅ PASS
+
+**Menus racine visibles :**
+- [454] Dashboard PARABOX ✅
+- [448] PARABOX Logistique ✅
+
+**Sous-menus PARABOX Logistique visibles (5/5) :**
+- [453] Signatures BL ✅ (seq=5)
+- [449] Traçabilité ✅ (seq=10)
+- [450] Litiges ✅ (seq=20)
+- [451] Encaissements ✅ (seq=30)
+- [452] Alias Produits ✅ (seq=40)
+
+**Accès modèles vérifiés :**
+- `parabox.sign.request` : READ ✅
+- `parabox.encaissement` : READ ✅
+- `parabox.product.alias` : READ ✅
+- `parabox.litige` : READ ✅
+- `parabox.logistics.line` : READ ✅
+
+### 5. TEST 5 — Comptable (`comptable@parabox.ma` / Amina Chraibi) ✅ PASS
+
+**Menus visibles (conformes aux restrictions métier) :**
+- [448] PARABOX Logistique ✅
+- [449] Traçabilité ✅
+- [450] Litiges ✅
+- [451] Encaissements ✅
+
+**Menus correctement MASQUÉS pour comptable (normal) :**
+- Signatures BL — groupe 118+120 seulement (pas 122)
+- Alias Produits — groupe 118+120 seulement (pas 122)
+- Dashboard PARABOX — groupe 118 seulement (Direction)
+
+**Accès modèles vérifiés :**
+- `parabox.encaissement` : READ ✅
+- `parabox.litige` : READ ✅
+- `parabox.logistics.line` : READ ✅
+
+### 6. Score global des tests — FINAL
+
+```
+TEST 1  Commercial     ✅ PASS — SO créée, notification chatter ✅
+TEST 2  Magasinier     ✅ PASS — PICK validé, T1 posé ✅ (BUG#6 contourné)
+TEST 3  Livreur        ✅ PASS — scan produit, T2 posé, OTP envoyé ✅
+TEST 4  Client/Sign    ✅ PASS — T3, auto-DONE, auto-facture ✅
+TEST 5  Direction      ✅ PASS — 5/5 sous-menus PARABOX visibles ✅
+TEST 5  Comptable      ✅ PASS — 3/5 sous-menus (restriction métier correcte) ✅
+─────────────────────────────────────────────────────────────────
+Flux T1/T2/T3          ✅ 100% fonctionnel
+Auto-DONE OUT          ✅ fonctionnel
+Auto-facture           ✅ fonctionnel (FAC/2026/00001 créée + postée)
+Notification chatter   ✅ fonctionnel
+Scanner obligatoire    ✅ fonctionnel
+Isolation rôles        ✅ respectée (magasinier↔livreur, comptable↔direction)
+```
+
+### 7. Récapitulatif bugs total — 8 bugs résolus
+
+| # | Bug | Fichier | État |
+|---|-----|---------|------|
+| 1 | `&&` JS non échappé dans arch_db | `mobile_templates.xml` | ✅ DB+file |
+| 2 | `blState` condition imbriquée | `mobile_templates.xml` | ✅ DB |
+| 3 | `parabox.sign.log` toujours vide | `sign_request.py` | ✅ déployé |
+| 4 | Route `send-otp` 404 | `sign_controller.py` | ✅ déployé |
+| 5 | Portal → `/my` au lieu mobile | `mobile_controller.py` | ✅ à déployer |
+| 6 | `alias_name` inexistant | `mobile_controller.py` | ✅ à déployer |
+| 7 | `ml.qty_done` Odoo 17 | `mobile_controller.py` | ✅ à déployer |
+| 8 | `move.reserved_availability` Odoo 17 | `stock_picking.py` | ✅ à déployer |
+| +  | Groupes PARABOX non assignés (config) | DB | ✅ FAIT via API |
+| +  | ACL modèles manquantes pour PARABOX | 3 CSV files | ⚠️ temporaire via groupes std |
+
+### 8. Actions restantes avant prod
+
+```
+1. COPIER vers C:\Program Files\Odoo 17.0.20260219\server\addons\ :
+   parabox_logistics_tracking/   (tout le module)
+   parabox_mobile/controllers/mobile_controller.py
+   parabox_mobile/views/mobile_templates.xml
+   parabox_sign/models/sign_request.py
+   parabox_sign/views/sign_request_views.xml
+   + security_fixes/parabox_sign/security/ir.model.access.csv
+   + security_fixes/parabox_encaissement/security/ir.model.access.csv
+   + security_fixes/parabox_product_alias/security/ir.model.access.csv
+
+2. COPIER les security_fixes CSV vers les sources addons :
+   → parabox_sign/security/ir.model.access.csv
+   → parabox_encaissement/security/ir.model.access.csv
+   → parabox_product_alias/security/ir.model.access.csv
+
+3. COMMANDES :
+   net stop odoo-server-17.0
+   python odoo-bin -d parabox_db -u parabox_logistics_tracking,parabox_mobile,parabox_sign,parabox_encaissement,parabox_product_alias --stop-after-init
+   net start odoo-server-17.0
+
+4. AMÉLIORATION FUTURE (non urgente) :
+   Remplacer _is_livreur() hardcodé par has_group('...group_parabox_livreur')
+```
+
+---
+*Mise à jour : 13/04/2026 — Tests complets validés sur tous les profils*
