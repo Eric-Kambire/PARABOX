@@ -1,3 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_parabox_logistics_line_user,parabox.logistics.line user,model_parabox_logistics_line,stock.group_stock_user,1,1,1,0
 access_parabox_logistics_line_manager,parabox.logistics.line manager,model_parabox_logistics_line,stock.group_stock_manager,1,1,1,1
+access_parabox_logistics_line_direction,parabox.logistics.line direction,model_parabox_logistics_line,parabox_logistics_tracking.group_parabox_direction,1,1,1,1
+access_parabox_logistics_line_commercial,parabox.logistics.line commercial,model_parabox_logistics_line,parabox_logistics_tracking.group_parabox_commercial,1,1,0,0
+access_parabox_logistics_line_magasinier,parabox.logistics.line magasinier,model_parabox_logistics_line,parabox_logistics_tracking.group_parabox_magasinier,1,1,1,0
+access_parabox_logistics_line_comptable,parabox.logistics.line comptable,model_parabox_logistics_line,parabox_logistics_tracking.group_parabox_comptable,1,0,0,0

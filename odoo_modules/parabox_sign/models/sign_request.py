@@ -303,14 +303,21 @@ class ParaboxSignRequest(models.Model):
     # ─── Signature ────────────────────────────────────────────────────────────
 
     def save_signature(self, signature_b64, sign_ip=None, sign_user_agent=None, sign_gps=None, otp_verified=False):
-        """Enregistre la signature et génère le PDF signé."""
+        """
+        Enregistre la signature et déclenche la chaîne automatique :
+        1. Sauvegarde signature + génération PDF
+        2. T3 : timestamp livraison confirmée sur stock.picking
+        3. Auto-validation PBX/OUT → DONE
+        4. Auto-facturation sur livré réel (si SO configuré 'livraison')
+        """
         self.ensure_one()
 
+        now = fields.Datetime.now()
         mode = 'otp' if otp_verified else 'degrade'
         self.sudo().write({
             'signed': True,
             'signature_image': signature_b64,
-            'sign_datetime': fields.Datetime.now(),
+            'sign_datetime': now,
             'sign_ip': sign_ip or '',
             'sign_user_agent': sign_user_agent or '',
             'sign_gps': sign_gps or '',
@@ -353,6 +360,60 @@ class ParaboxSignRequest(models.Model):
         # Alerte ADV en mode dégradé
         if mode == 'degrade':
             self._alert_adv_degrade()
+
+        # ── T3 : timestamp livraison confirmée (OTP validé) ──────────────────
+        if self.picking_id:
+            try:
+                self.picking_id.sudo().write({'datetime_t3': now})
+                _logger.info("PARABOX T3: BL %s livraison confirmée [%s]", self.picking_id.name, now)
+            except Exception as e:
+                _logger.warning("PARABOX: erreur set T3 sur %s: %s", self.picking_id.name, e)
+
+        # ── Auto-validation PBX/OUT → DONE ───────────────────────────────────
+        if self.picking_id and self.picking_id.state not in ('done', 'cancel'):
+            try:
+                ctx = {
+                    'button_validate_picking_ids': [self.picking_id.id],
+                    'mail_notrack': True,
+                    'tracking_disable': True,
+                }
+                result = self.picking_id.sudo().with_context(**ctx).button_validate()
+                # Gestion du wizard backorder si nécessaire
+                if isinstance(result, dict) and result.get('res_model') == 'stock.backorder.confirmation':
+                    wiz = self.env['stock.backorder.confirmation'].sudo().with_context(**ctx).create({
+                        'pick_ids': [(4, self.picking_id.id)],
+                        'show_transfers': False,
+                    })
+                    wiz.sudo().with_context(**ctx).process()
+                _logger.info("PARABOX: PBX/OUT %s → DONE automatiquement après signature", self.picking_id.name)
+            except Exception as e:
+                _logger.error("PARABOX: erreur auto-validation OUT %s: %s", self.picking_id.name, e)
+
+        # ── Auto-facturation sur livré réel ───────────────────────────────────
+        if self.picking_id:
+            sale = getattr(self.picking_id, 'sale_id', False)
+            if sale and sale.exists():
+                try:
+                    invoice_status = getattr(sale, 'invoice_status', None)
+                    if invoice_status == 'to invoice':
+                        invoices = sale._create_invoices()
+                        for inv in invoices:
+                            try:
+                                inv.action_post()
+                            except Exception as e_post:
+                                _logger.warning(
+                                    "PARABOX: erreur confirmation facture %s: %s", inv.name, e_post
+                                )
+                        _logger.info(
+                            "PARABOX: %d facture(s) créée(s) et confirmée(s) pour SO %s",
+                            len(invoices), sale.name
+                        )
+                        self._log(
+                            action='invoice_created',
+                            detail=_("Facture auto créée après livraison BL %s") % self.picking_id.name,
+                        )
+                except Exception as e:
+                    _logger.error("PARABOX: erreur auto-facturation SO %s: %s", sale.name, e)
 
         _logger.info("BL %s signé par %s (mode: %s)", self.picking_id.name, self.client_id.name, mode)
         return True

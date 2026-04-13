@@ -56,6 +56,5 @@
               parent="parabox_logistics_tracking.menu_parabox_logistics_root"
               action="action_parabox_product_alias"
               sequence="40"
-              groups="parabox_logistics_tracking.group_parabox_direction,
-                      parabox_logistics_tracking.group_parabox_magasinier"/>
+              groups="parabox_logistics_tracking.group_parabox_direction,parabox_logistics_tracking.group_parabox_magasinier"/>
 </odoo>

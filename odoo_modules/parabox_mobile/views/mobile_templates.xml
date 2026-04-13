@@ -18,17 +18,24 @@
             <title>PARABOX Livreur</title>
             <style><![CDATA[
 :root {
-    --primary: #1e3a5f;
-    --primary-light: #2e5d9f;
-    --accent: #e74c3c;
+    /* ── Palette PARABOX ──────────────────────────────────── */
+    --o-color-1: #bedb39;   /* Vert-jaune PARABOX — accent, badges       */
+    --o-color-2: #2c3e50;   /* Marine foncé       — header, texte fort   */
+    --o-color-3: #f2f2f2;   /* Gris clair         — fond général         */
+    --o-color-4: #ffffff;   /* Blanc              — cards, surfaces       */
+    --o-color-5: #000000;   /* Noir               — texte                */
+    /* ── Variables fonctionnelles ────────────────────────── */
+    --primary: #2c3e50;
+    --primary-light: #34495e;
+    --accent: #bedb39;
     --success: #27ae60;
     --warning: #f39c12;
     --info: #2980b9;
     --text: #2c3e50;
     --text-muted: #7f8c8d;
-    --bg: #f4f6f9;
+    --bg: #f2f2f2;
     --card: #ffffff;
-    --border: #e8ecf0;
+    --border: #dde1e5;
     --shadow: 0 2px 12px rgba(0,0,0,0.08);
     --radius: 14px;
 }
@@ -46,7 +53,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial
     box-shadow: 0 3px 16px rgba(0,0,0,0.25);
 }
 .mob-logo { font-size: 18px; font-weight: 900; letter-spacing: 1px; }
-.mob-logo span { color: #5dade2; }
+.mob-logo span { color: var(--o-color-1); }
 .mob-subtitle { font-size: 11px; opacity: 0.65; margin-top: 2px; }
 .mob-badge {
     background: var(--accent); color: white;
@@ -327,15 +334,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial
                     <div class="kpi-lbl">Livrés aujourd'hui</div>
                 </div>
                 <div class="kpi-box">
-                    <div class="kpi-num" style="color:var(--primary);">
-                        <t t-esc="len([x for x in bls_data if x['signed']])"/>
+                    <div class="kpi-num" style="color:var(--accent);">
+                        <t t-esc="total_signed"/>
                     </div>
                     <div class="kpi-lbl">Signés</div>
                 </div>
             </div>
 
             <!-- Bouton Scanner un BL -->
-            <button onclick="openQRScanner('bl')" class="btn-mobile btn-secondary" style="margin-top:12px;background:linear-gradient(135deg,#1e3a5f,#2e5d9f);color:white;">
+            <button onclick="openQRScanner('bl')" class="btn-mobile btn-secondary" style="margin-top:12px;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:white;">
                 <i class="fa fa-qrcode"/> Scanner un BL
             </button>
 
@@ -656,12 +663,32 @@ function _highlightProduct(product) {
                         <i class="fa fa-barcode"/> Scanner produit
                     </button>
                 </div>
+                <!-- Barre de progression scan chargement -->
+                <div t-if="total_moves and total_moves > 0"
+                     style="margin-bottom:10px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);"
+                     t-att-style="'margin-bottom:10px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:' + ('#f0fff4' if all_scanned else '#fef9e7') + ';'">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-weight:700;font-size:13px;color:var(--primary);">
+                            <i class="fa fa-barcode"/> Scan chargement
+                        </span>
+                        <span t-att-style="'font-weight:800;font-size:15px;color:' + ('var(--success)' if all_scanned else 'var(--warning)') + ';'">
+                            <t t-esc="scan_count"/>/<t t-esc="total_moves"/>
+                        </span>
+                    </div>
+                    <div t-if="not all_scanned" style="margin-top:5px;font-size:12px;color:#784212;">
+                        ⚠️ Scannez tous les produits avant de confirmer la récupération.
+                    </div>
+                    <div t-if="all_scanned" style="margin-top:5px;font-size:12px;color:var(--success);">
+                        ✅ Tous les produits ont été scannés et confirmés.
+                    </div>
+                </div>
                 <div t-if="not lignes" class="msg-box msg-warning">
                     <i class="fa fa-exclamation-triangle msg-icon"/>
                     <span>Aucun produit dans ce bon de livraison.</span>
                 </div>
                 <t t-foreach="lignes" t-as="ligne" t-key="ligne_index">
-                    <div t-att-class="'product-item' + (' has-lots' if ligne['has_lots'] else '')">
+                    <div t-att-class="'product-item' + (' has-lots' if ligne['has_lots'] else '') + (' scan-match' if ligne.get('scan_confirmed') else '')"
+                         t-att-data-move-id="ligne.get('move_id', '')">
                         <div class="product-info">
                             <div class="product-name"><t t-esc="ligne['product_name']"/></div>
                             <div class="product-lot" t-if="ligne['has_lots']">
@@ -716,11 +743,23 @@ function _highlightProduct(product) {
                     <!-- Pas encore d'OTP -->
                     <div t-else="">
                         <p style="color:var(--text-muted);font-size:14px;margin-bottom:14px;line-height:1.6;">
-                            Cliquez sur le bouton ci-dessous pour envoyer un code OTP
-                            au client par email. Il devra signer électroniquement sur son téléphone.
+                            Après avoir chargé tous les produits et confirmé votre scan,
+                            cliquez sur le bouton ci-dessous. Un code OTP sera envoyé
+                            automatiquement au client — dites-lui de l'entrer sur son téléphone.
                         </p>
-                        <button id="btn-send-otp" onclick="sendOtp(this)" class="btn-mobile btn-primary">
-                            <i class="fa fa-envelope-o"/> Envoyer le code OTP au client
+                        <!-- Bouton actif : tous les produits scannés -->
+                        <button t-if="all_scanned"
+                                id="btn-send-otp" onclick="sendOtp(this)"
+                                class="btn-mobile btn-primary">
+                            <i class="fa fa-check-circle"/> Je confirme avoir récupéré la commande
+                        </button>
+                        <!-- Bouton désactivé : scan incomplet -->
+                        <button t-else=""
+                                class="btn-mobile btn-secondary"
+                                style="opacity:0.55;cursor:not-allowed;"
+                                disabled="disabled">
+                            <i class="fa fa-lock"/> Scannez tous les produits d'abord
+                            (<t t-esc="scan_count"/>/<t t-esc="total_moves"/>)
                         </button>
                         <div id="otp-result"></div>
                         <div id="sign-url-section" style="display:none;">

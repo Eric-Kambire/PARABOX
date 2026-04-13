@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+<!--
+    PARABOX — Tâche planifiée : alerte délai prise en charge livreur
+    ─────────────────────────────────────────────────────────────────
+    Toutes les heures : si un PBX/OUT est prêt (T1 set) mais que le livreur
+    n'a pas encore confirmé la récupération (T2 absent) depuis plus de 2h,
+    une alerte est postée dans le chatter + activité créée.
+    Évite les commandes préparées qui restent en zone expédition sans être prises.
+-->
+    <record id="cron_check_t2_delay" model="ir.cron">
+        <field name="name">PARABOX — Alerte commande non récupérée par livreur (T2-T1 > 2h)</field>
+        <field name="model_id" ref="stock.model_stock_picking"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_check_t2_delay()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="numbercall">-1</field>
+        <field name="active" eval="True"/>
+        <field name="user_id" ref="base.user_root"/>
+    </record>
+
+</odoo>

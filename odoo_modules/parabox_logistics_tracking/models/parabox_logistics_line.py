@@ -103,6 +103,45 @@ class ParaboxLogisticsLine(models.Model):
         string='Raison écart / commentaire',
     )
 
+    # ─── Timestamps T1 / T2 / T3 (related depuis stock.picking) ─────────────
+    datetime_t1 = fields.Datetime(
+        string='T1 — Préparation terminée',
+        related='picking_id.datetime_t1',
+        store=True,
+        readonly=True,
+        help="Magasinier valide PBX/PICK — marchandise en zone expédition.",
+    )
+    datetime_t2 = fields.Datetime(
+        string='T2 — Prise en charge livreur',
+        related='picking_id.datetime_t2',
+        store=True,
+        readonly=True,
+        help="Livreur confirme récupération après scan de tous les produits.",
+    )
+    datetime_t3 = fields.Datetime(
+        string='T3 — Livraison confirmée (OTP)',
+        related='picking_id.datetime_t3',
+        store=True,
+        readonly=True,
+        help="Client valide OTP + signe BIC → BL DONE automatiquement.",
+    )
+    duree_prise_en_charge = fields.Float(
+        string='Délai prise en charge (min)',
+        related='picking_id.duree_prise_en_charge',
+        store=True,
+        readonly=True,
+        digits=(10, 1),
+        help="T2 − T1 : délai entre fin préparation et départ livreur.",
+    )
+    duree_livraison = fields.Float(
+        string='Durée livraison (min)',
+        related='picking_id.duree_livraison',
+        store=True,
+        readonly=True,
+        digits=(10, 1),
+        help="T3 − T2 : durée réelle de la livraison chez le client.",
+    )
+
     @api.depends('qty_ordered', 'qty_prepared', 'qty_loaded', 'qty_delivered')
     def _compute_ecarts(self):
         for line in self:

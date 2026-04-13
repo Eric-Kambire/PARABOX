@@ -2,11 +2,22 @@
 <odoo noupdate="1">
 <!--
 ═══════════════════════════════════════════════════════════════════════════
-PARABOX — Automatisations IN-APP (Odoo 17)
+PARABOX — Automatisations IN-APP (Odoo 17.0.20260219+)
 ─────────────────────────────────────────────────────────────────────────
-Odoo 17 : base.automation hérite de ir.actions.server.
-Le code est mis DIRECTEMENT sur l'automation (plus de action_server_ids).
-Champs obligatoires : model_id, trigger, state='code', code.
+IMPORTANT Odoo 17 : base.automation N'hérite PLUS de ir.actions.server.
+Le champ 'state' et 'code' doivent être sur un ir.actions.server séparé,
+lié à l'automation via action_server_ids (One2many).
+
+Format correct :
+  <record model="base.automation">
+      ...trigger, filter...
+      <field name="action_server_ids">
+          <record model="ir.actions.server">
+              <field name="state">code</field>
+              <field name="code">...</field>
+          </record>
+      </field>
+  </record>
 ═══════════════════════════════════════════════════════════════════════════
 -->
 
@@ -19,11 +30,14 @@ Champs obligatoires : model_id, trigger, state='code', code.
     <field name="trigger">on_write</field>
     <field name="filter_pre_domain">[('state', 'not in', ['sale', 'done'])]</field>
     <field name="filter_domain">[('state', '=', 'sale')]</field>
-    <field name="state">code</field>
     <field name="active" eval="True"/>
-    <field name="code"><![CDATA[
+    <field name="action_server_ids">
+        <record model="ir.actions.server" id="action_srv_sale_confirmed_notify">
+            <field name="name">PARABOX — Notifier magasinier commande confirmée</field>
+            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="state">code</field>
+            <field name="code"><![CDATA[
 for record in records:
-    # Chatter sur la commande
     record.message_post(
         body=(
             "<b>Commande confirmee - A preparer</b><br/>"
@@ -31,7 +45,7 @@ for record in records:
             "Client : <b>%(partner)s</b><br/>"
             "Montant : <b>%(amount).2f MAD</b><br/>"
             "Lignes : %(lines)d produit(s)<br/>"
-            "<em>Le magasinier doit verifier le stock et valider le bon de livraison.</em>"
+            "<em>Le magasinier doit verifier le stock et preparer le bon de livraison.</em>"
         ) % {
             'name': record.name,
             'partner': record.partner_id.name,
@@ -41,8 +55,6 @@ for record in records:
         message_type='comment',
         subtype_xmlid='mail.mt_note',
     )
-
-    # Notification IN-APP
     groups_to_notify = [
         env.ref('stock.group_stock_manager', raise_if_not_found=False),
         env.ref('parabox_logistics_tracking.group_parabox_magasinier', raise_if_not_found=False),
@@ -74,7 +86,9 @@ for record in records:
                 'notification_status': 'ready',
             }) for pid in partner_ids],
         })
-    ]]></field>
+]]></field>
+        </record>
+    </field>
 </record>
 
 <!-- ─────────────────────────────────────────────────────────────────────
@@ -86,9 +100,13 @@ for record in records:
     <field name="trigger">on_write</field>
     <field name="filter_pre_domain">[('state', '!=', 'done'), ('picking_type_code', '=', 'outgoing')]</field>
     <field name="filter_domain">[('state', '=', 'done'), ('picking_type_code', '=', 'outgoing')]</field>
-    <field name="state">code</field>
     <field name="active" eval="True"/>
-    <field name="code"><![CDATA[
+    <field name="action_server_ids">
+        <record model="ir.actions.server" id="action_srv_picking_done_notify">
+            <field name="name">PARABOX — Notifier commercial BL validé</field>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="state">code</field>
+            <field name="code"><![CDATA[
 for record in records:
     sale_order = record.sale_id or False
     groups_to_notify = [
@@ -123,7 +141,9 @@ for record in records:
                 'notification_status': 'ready',
             }) for pid in partner_ids],
         })
-    ]]></field>
+]]></field>
+        </record>
+    </field>
 </record>
 
 <!-- ─────────────────────────────────────────────────────────────────────
@@ -135,9 +155,13 @@ for record in records:
     <field name="trigger">on_write</field>
     <field name="filter_pre_domain">[('state', '!=', 'cancel'), ('picking_type_code', '=', 'outgoing')]</field>
     <field name="filter_domain">[('state', '=', 'cancel'), ('picking_type_code', '=', 'outgoing')]</field>
-    <field name="state">code</field>
     <field name="active" eval="True"/>
-    <field name="code"><![CDATA[
+    <field name="action_server_ids">
+        <record model="ir.actions.server" id="action_srv_picking_cancel_notify">
+            <field name="name">PARABOX — Notifier BL annulé</field>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="state">code</field>
+            <field name="code"><![CDATA[
 for record in records:
     groups_to_notify = [
         env.ref('sales_team.group_sale_salesman', raise_if_not_found=False),
@@ -156,7 +180,7 @@ for record in records:
                 "<b>Bon de livraison annule</b><br/>"
                 "BL : <b>%(name)s</b><br/>"
                 "Client : %(partner)s<br/>"
-                "Ce bon de livraison a ete annule par le magasinier."
+                "Ce bon de livraison a ete annule."
             ) % {
                 'name': record.name,
                 'partner': record.partner_id.name if record.partner_id else '—',
@@ -170,7 +194,9 @@ for record in records:
                 'notification_status': 'ready',
             }) for pid in partner_ids],
         })
-    ]]></field>
+]]></field>
+        </record>
+    </field>
 </record>
 
 </odoo>

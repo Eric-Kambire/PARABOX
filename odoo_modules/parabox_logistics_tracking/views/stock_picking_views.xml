@@ -9,10 +9,21 @@
             <notebook position="inside">
                 <page string="Tracabilite PARABOX" name="logistics_tracking"
                       invisible="[('picking_type_code', '!=', 'outgoing')]">
-                    <group>
+                    <group string="Indicateurs">
                         <field name="taux_service_global" string="Taux de service global (%)"
                                widget="percentage" readonly="1"/>
                         <field name="has_logistics_ecart" string="Écarts détectés" readonly="1"/>
+                    </group>
+                    <group string="Timestamps">
+                        <group>
+                            <field name="datetime_t1" string="T1 — Préparation terminée" readonly="1"/>
+                            <field name="datetime_t2" string="T2 — Prise en charge livreur" readonly="1"/>
+                            <field name="datetime_t3" string="T3 — Livraison confirmée (OTP)" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="duree_prise_en_charge" string="Délai prise en charge (min)" readonly="1"/>
+                            <field name="duree_livraison" string="Durée livraison (min)" readonly="1"/>
+                        </group>
                     </group>
                     <field name="logistics_line_ids">
                         <tree editable="bottom"

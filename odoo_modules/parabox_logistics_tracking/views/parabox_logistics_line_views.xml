@@ -35,6 +35,17 @@
                             <field name="note_ecart"/>
                         </group>
                     </group>
+                    <group string="Traçabilité temporelle">
+                        <group string="Timestamps">
+                            <field name="datetime_t1" readonly="1"/>
+                            <field name="datetime_t2" readonly="1"/>
+                            <field name="datetime_t3" readonly="1"/>
+                        </group>
+                        <group string="Durées">
+                            <field name="duree_prise_en_charge" readonly="1"/>
+                            <field name="duree_livraison" readonly="1"/>
+                        </group>
+                    </group>
                 </sheet>
             </form>
         </field>
@@ -60,6 +71,11 @@
                 <field name="taux_service" widget="percentage"/>
                 <field name="has_ecart" column_invisible="1"/>
                 <field name="substitution"/>
+                <field name="datetime_t1"/>
+                <field name="datetime_t2"/>
+                <field name="datetime_t3"/>
+                <field name="duree_prise_en_charge"/>
+                <field name="duree_livraison"/>
             </tree>
         </field>
     </record>
@@ -71,21 +87,6 @@
         <field name="view_mode">tree,form</field>
     </record>
 
-    <!-- Menu — groupes : root visible par tous les rôles internes PARABOX -->
-    <menuitem id="menu_parabox_logistics_root"
-              name="PARABOX Logistique"
-              sequence="90"
-              groups="parabox_logistics_tracking.group_parabox_direction,
-                      parabox_logistics_tracking.group_parabox_commercial,
-                      parabox_logistics_tracking.group_parabox_magasinier,
-                      parabox_logistics_tracking.group_parabox_comptable"/>
-    <!-- Traçabilité : Direction + Commercial + Magasinier -->
-    <menuitem id="menu_parabox_logistics_tracking"
-              name="Traçabilité"
-              parent="menu_parabox_logistics_root"
-              action="action_parabox_logistics_line"
-              sequence="10"
-              groups="parabox_logistics_tracking.group_parabox_direction,
-                      parabox_logistics_tracking.group_parabox_commercial,
-                      parabox_logistics_tracking.group_parabox_magasinier"/>
+    <!-- Menus déplacés dans views/menus.xml (chargé en dernier) -->
+    <!-- pour éviter "External ID not found" lors de l'upgrade des groupes -->
 </odoo>

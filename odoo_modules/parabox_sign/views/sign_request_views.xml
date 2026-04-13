@@ -106,8 +106,7 @@
               parent="parabox_logistics_tracking.menu_parabox_logistics_root"
               action="action_parabox_sign_request"
               sequence="5"
-              groups="parabox_logistics_tracking.group_parabox_direction,
-                      parabox_logistics_tracking.group_parabox_magasinier"/>
+              groups="parabox_logistics_tracking.group_parabox_direction,parabox_logistics_tracking.group_parabox_magasinier"/>
 
     <!-- Bouton sur stock.picking -->
     <record id="view_picking_sign_form" model="ir.ui.view">

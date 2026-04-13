@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<!--
+    PARABOX — Menus de navigation
+    ======================================================
+    Ce fichier est chargé EN DERNIER dans le manifest
+    pour garantir que tous les groupes de sécurité
+    sont déjà créés (groups.xml) avant d'être référencés
+    ici via l'attribut groups="...".
+    Sans cela, Odoo lève "External ID not found" pendant
+    l'upgrade sur les groupes non encore commités.
+    ======================================================
+-->
+
+    <!-- ─────────────────────────────────────────────────
+         Menu racine — visible par tous les rôles PARABOX
+         ───────────────────────────────────────────────── -->
+    <menuitem id="menu_parabox_logistics_root"
+              name="PARABOX Logistique"
+              sequence="90"
+              groups="parabox_logistics_tracking.group_parabox_direction,parabox_logistics_tracking.group_parabox_commercial,parabox_logistics_tracking.group_parabox_magasinier,parabox_logistics_tracking.group_parabox_comptable"/>
+
+    <!-- ─────────────────────────────────────────────────
+         Traçabilité — Direction + Commercial + Magasinier
+         ───────────────────────────────────────────────── -->
+    <menuitem id="menu_parabox_logistics_tracking"
+              name="Traçabilité"
+              parent="menu_parabox_logistics_root"
+              action="action_parabox_logistics_line"
+              sequence="10"
+              groups="parabox_logistics_tracking.group_parabox_direction,parabox_logistics_tracking.group_parabox_commercial,parabox_logistics_tracking.group_parabox_magasinier,parabox_logistics_tracking.group_parabox_comptable"/>
+
+</odoo>

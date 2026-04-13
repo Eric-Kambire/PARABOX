@@ -80,6 +80,5 @@
               parent="parabox_logistics_tracking.menu_parabox_logistics_root"
               action="action_parabox_encaissement"
               sequence="30"
-              groups="parabox_logistics_tracking.group_parabox_direction,
-                      parabox_logistics_tracking.group_parabox_comptable"/>
+              groups="parabox_logistics_tracking.group_parabox_direction,parabox_logistics_tracking.group_parabox_comptable"/>
 </odoo>
